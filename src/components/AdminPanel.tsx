@@ -292,8 +292,8 @@ export function AdminPanel() {
 
       // Validate header row
       const headers = rows[0];
-      const requiredFields = ['name', 'description', 'price', 'image_url', 'stock', 
-                            'body_shapes', 'color_tones', 'dress_type'];
+      const requiredFields = ['name', 'description', 'price', 'image_url', "image_url_2", "image_url_3", "sizes", 
+                            'body_shapes', 'color_tones', 'dress_type', "stock" ];
       
       const missingFields = requiredFields.filter(field => !headers.includes(field));
       if (missingFields.length > 0) {
@@ -304,11 +304,18 @@ export function AdminPanel() {
       const items = [];
       for (let i = 1; i < rows.length; i++) {
         if (rows[i].length === 1 && !rows[i][0]) continue; // Skip empty rows
-
+        
         const row = rows[i];
+        console.log(row);
+        console.log(row.length);
+        console.log(headers);
+        console.log(headers.length);
         if (row.length !== headers.length) {
           throw new Error(`Invalid number of columns in row ${i + 1}`);
         }
+
+
+
 
         const item = {};
         headers.forEach((header, index) => {
@@ -319,7 +326,23 @@ export function AdminPanel() {
             return;
           }
 
-          // Parse arrays and objects if the value is a string
+          // Special handling for body_shapes, sizes, and color_tones
+          if (header === 'body_shapes' && typeof value === 'string') {
+            // Convert comma-separated list to array, handle spaces properly
+            value = value.split(',').map(shape => shape.trim());
+          }
+          
+          if (header === 'sizes' && typeof value === 'string') {
+            // Handle sizes like "XS;S;M;L;XL;XXL"
+            value = value.split(';').map(size => size.trim());
+          }
+          
+          if (header === 'color_tones' && typeof value === 'string') {
+            // Handle color tones like "cool neutral" or "cool warm"
+            value = [value.trim()];
+          }
+
+          // Parse other arrays and objects if the value is a string
           if (typeof value === 'string' && (value.startsWith('[') || value.startsWith('{'))) {
             try {
               value = JSON.parse(value);

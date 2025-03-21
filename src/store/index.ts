@@ -8,8 +8,16 @@ interface CartItem {
   inventory_items: {
     id: string;
     name: string;
+    description: string;
     price: number;
     image_url: string;
+    image_url_2: string;
+    image_url_3: string;
+    sizes: string[];
+    body_shapes: string[];
+    color_tones: string[];
+    dress_type: string[];
+    stock: number;
   };
 }
 
@@ -164,8 +172,16 @@ export const useCartStore = create<CartState>((set, get) => ({
           inventory_items (
             id,
             name,
+            description,
             price,
-            image_url
+            image_url,
+            image_url_2,
+            image_url_3,
+            sizes,
+            body_shapes,
+            color_tones,
+            dress_type,
+            stock
           )
         `)
         .eq('user_id', session.user.id);

@@ -22,8 +22,18 @@ type Order = {
     quantity: number;
     price: number;
     inventory_items: {
+      id: string;
       name: string;
+      price: number;
+      description: string;
       image_url: string;
+      image_url_2: string;
+      image_url_3: string;
+      sizes: string[];
+      body_shapes: string[];
+      color_tones: string[];
+      dress_type: string[];
+      stock: number;
     };
   }[];
 };
@@ -66,7 +76,15 @@ export function OrderTracking({ orderId, onBack }: Props) {
             *,
             inventory_items (
               name,
-              image_url
+              description,
+              image_url,
+              image_url_2,
+              image_url_3,
+              sizes,
+              body_shapes,
+              color_tones,
+              dress_type,
+              stock
             )
           )
         `)
