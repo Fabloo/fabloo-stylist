@@ -9,6 +9,7 @@
       - `price` (numeric)
       - `image_url` (text)
       - `stock` (integer)
+      - `sizes` (text array)
       - `created_at` (timestamp)
       - `updated_at` (timestamp)
     
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   price numeric NOT NULL CHECK (price >= 0),
   image_url text NOT NULL,
   stock integer NOT NULL DEFAULT 0 CHECK (stock >= 0),
+  sizes text[] NOT NULL DEFAULT '{}',
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
@@ -95,54 +97,3 @@ CREATE POLICY "Only admins can modify item attributes"
   TO authenticated
   USING ((auth.jwt() ->> 'role'::text) = 'admin'::text)
   WITH CHECK ((auth.jwt() ->> 'role'::text) = 'admin'::text);
-
--- Insert sample data
-INSERT INTO inventory_items (name, description, price, image_url, stock) VALUES
-  (
-    'Elegant Wrap Dress',
-    'A flattering wrap dress perfect for hourglass figures, made with flowing fabric that complements your curves.',
-    129.99,
-    'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&q=80&w=1000',
-    10
-  ),
-  (
-    'A-Line Summer Dress',
-    'Light and breezy A-line dress that suits multiple body types, featuring a fitted bodice and flared skirt.',
-    89.99,
-    'https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?auto=format&fit=crop&q=80&w=1000',
-    15
-  ),
-  (
-    'Classic Sheath Dress',
-    'Timeless sheath dress that creates a sleek silhouette, perfect for both work and special occasions.',
-    149.99,
-    'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?auto=format&fit=crop&q=80&w=1000',
-    8
-  );
-
-INSERT INTO item_attributes (item_id, body_shapes, color_tones, dress_type) 
-SELECT 
-  id,
-  ARRAY['hourglass', 'pear'],
-  ARRAY['warm', 'neutral'],
-  'dress'
-FROM inventory_items 
-WHERE name = 'Elegant Wrap Dress';
-
-INSERT INTO item_attributes (item_id, body_shapes, color_tones, dress_type)
-SELECT 
-  id,
-  ARRAY['rectangle', 'apple', 'pear'],
-  ARRAY['cool', 'neutral'],
-  'dress'
-FROM inventory_items
-WHERE name = 'A-Line Summer Dress';
-
-INSERT INTO item_attributes (item_id, body_shapes, color_tones, dress_type)
-SELECT 
-  id,
-  ARRAY['hourglass', 'inverted-triangle'],
-  ARRAY['cool', 'warm'],
-  'dress'
-FROM inventory_items
-WHERE name = 'Classic Sheath Dress';

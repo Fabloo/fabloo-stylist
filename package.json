@@ -10,17 +10,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mediapipe/camera_utils": "^0.3.1620248972",
+    "@mediapipe/face_mesh": "^0.4.1633559619",
+    "@mediapipe/pose": "^0.5.1675469404",
+    "@supabase/supabase-js": "^2.39.7",
+    "@tensorflow/tfjs": "^4.17.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
-    "zustand": "^4.5.2",
     "react-dom": "^18.3.1",
-    "@mediapipe/pose": "^0.5.1675469404",
-    "@mediapipe/face_mesh": "^0.4.1633559619",
-    "@mediapipe/camera_utils": "^0.3.1620248972",
-    "@tensorflow/tfjs": "^4.17.0",
-    "@tensorflow/tfjs": "^4.17.0",
     "react-router-dom": "^6.22.3",
-    "@supabase/supabase-js": "^2.39.7"
+    "supabase": "^2.19.7",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

@@ -5,18 +5,13 @@ import type { UserProfile, BodyShape, SkinTone } from '../types';
 interface CartItem {
   id: string;
   quantity: number;
+  size_selected: string | null;
   inventory_items: {
     id: string;
     name: string;
     description: string;
     price: number;
     image_url: string;
-    image_url_2: string;
-    image_url_3: string;
-    sizes: string[];
-    body_shapes: string[];
-    color_tones: string[];
-    dress_type: string[];
     stock: number;
   };
 }
@@ -26,6 +21,7 @@ interface AuthState {
   user: any | null;
   isLoading: boolean;
   profile: UserProfile | null;
+  isAdmin: boolean;
   setUser: (user: any) => void;
   setProfile: (profile: UserProfile) => void;
   logout: () => void;
@@ -57,37 +53,50 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: true,
   profile: null,
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
+  isAdmin: false,
+  setUser: (user) => {
+    const isAdmin = user?.role === 'admin' || user?.user_metadata?.role === 'admin';
+    set({ user : user, isAuthenticated: !!user, isAdmin : isAdmin });
+  },
   setProfile: (profile) => set({ profile }),
   logout: async () => {
     await supabase.auth.signOut();
-    set({ user: null, profile: null, isAuthenticated: false, isLoading: false });
+    set({ user: null, profile: null, isAuthenticated: false, isLoading: false, isAdmin: false });
   },
   checkAuth: async () => {
     try {
       set({ isLoading: true });
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (!session) {
-        set({ user: null, profile: null, isAuthenticated: false, isLoading: false });
+        set({ 
+          user: null, 
+          profile: null, 
+          isAuthenticated: false, 
+          isLoading: false, 
+          isAdmin: false 
+        });
         return;
       }
 
+      // Check if user has admin role in either user metadata or role field
+      const isAdmin = 
+        session.user?.role === 'admin' || 
+        session.user?.user_metadata?.role === 'admin';
+
+      // Fetch user profile
       const { data: dbProfile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .single();
 
-      // Map database profile fields to app profile fields
       let appProfile = null;
       if (dbProfile) {
         appProfile = {
           id: dbProfile.id,
-          // Map body_shape to bodyShape
           bodyShape: dbProfile.body_shape as BodyShape | undefined,
-          // Map skin_tone to skinTone
           skinTone: dbProfile.skin_tone as SkinTone | undefined,
-          // Keep other fields as they are
           ...dbProfile
         };
       }
@@ -96,11 +105,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: session.user,
         profile: appProfile,
         isAuthenticated: true,
-        isLoading: false
+        isLoading: false,
+        isAdmin: isAdmin
+      });
+      
+      console.log('Auth check completed:', {
+        user: session.user,
+        isAdmin: isAdmin
       });
     } catch (error) {
       console.error('Auth check error:', error);
-      set({ user: null, profile: null, isAuthenticated: false, isLoading: false });
+      set({ 
+        user: null, 
+        profile: null, 
+        isAuthenticated: false, 
+        isLoading: false, 
+        isAdmin: false 
+      });
     }
   },
   updateProfile: async (updates) => {
@@ -169,25 +190,21 @@ export const useCartStore = create<CartState>((set, get) => ({
         .select(`
           id,
           quantity,
-          inventory_items (
+          size_selected,
+          inventory_items!inner (
             id,
             name,
             description,
             price,
             image_url,
-            image_url_2,
-            image_url_3,
-            sizes,
-            body_shapes,
-            color_tones,
-            dress_type,
             stock
           )
         `)
         .eq('user_id', session.user.id);
 
       if (error) throw error;
-      set({ items: data as CartItem[] || [] });
+      // Cast the data to unknown first to handle type conversion
+      set({ items: (data as unknown) as CartItem[] || [] });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Failed to fetch cart' });
       console.error('Cart fetch error:', err);

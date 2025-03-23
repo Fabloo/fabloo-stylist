@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Package, RefreshCcw, Search, CheckCircle, XCircle, Filter, Upload, Download, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../store';
+import { useNavigate } from 'react-router-dom';
 
 type Order = {
   id: string;
@@ -32,6 +34,8 @@ type Return = {
 };
 
 export function AdminPanel() {
+  const { isAdmin, user } = useAuthStore();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'orders' | 'returns' | 'inventory'>('orders');
   const [orders, setOrders] = useState<Order[]>([]);
   const [returns, setReturns] = useState<Return[]>([]);
@@ -47,6 +51,10 @@ export function AdminPanel() {
   const [showUploadGuide, setShowUploadGuide] = useState(false);
   const [uploadFormat, setUploadFormat] = useState<any>(null);
   const [fileProcessing, setFileProcessing] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
+
+  console.log("user", user);
+  console.log("isAdmin", isAdmin);
 
   useEffect(() => {
     fetchUploadFormat();
@@ -64,6 +72,25 @@ export function AdminPanel() {
       console.error('Error fetching upload format:', err);
     }
   };
+
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      await useAuthStore.getState().checkAuth();
+      setAuthChecking(false);
+    };
+    
+    checkAuthentication();
+  }, []);
+  
+
+  useEffect(() => {
+    if (!authChecking && (!user || user?.user_metadata?.role !== 'admin')) {
+      console.log("not admin");
+      console.log(user);
+      console.log(user?.role);
+      console.log(authChecking);
+    }
+  }, [user, authChecking, navigate]);
 
   useEffect(() => {
     if (activeTab === 'orders') {
@@ -114,6 +141,7 @@ export function AdminPanel() {
         description: formData.get('description'),
         price: parseFloat(formData.get('price') as string),
         stock: parseInt(formData.get('stock') as string),
+        sizes: (formData.get('sizes') as string).split(',').map(s => s.trim()),
         image_url: formData.get('image_url'),
       };
 
@@ -264,6 +292,11 @@ export function AdminPanel() {
   });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAdmin) {
+      setUploadError('Admin access required');
+      return;
+    }
+
     const file = e.target.files?.[0];
     if (!file) return;
     setFileProcessing(true);
@@ -292,7 +325,7 @@ export function AdminPanel() {
 
       // Validate header row
       const headers = rows[0];
-      const requiredFields = ['name', 'description', 'price', 'image_url', "image_url_2", "image_url_3", "sizes", 
+      const requiredFields = ['name', 'description', 'price', 'image_url', "sizes", 
                             'body_shapes', 'color_tones', 'dress_type', "stock" ];
       
       const missingFields = requiredFields.filter(field => !headers.includes(field));
@@ -301,7 +334,7 @@ export function AdminPanel() {
       }
 
       // Process each row
-      const items = [];
+      const items: any[] = [];
       for (let i = 1; i < rows.length; i++) {
         if (rows[i].length === 1 && !rows[i][0]) continue; // Skip empty rows
         
@@ -314,15 +347,12 @@ export function AdminPanel() {
           throw new Error(`Invalid number of columns in row ${i + 1}`);
         }
 
-
-
-
         const item = {};
         headers.forEach((header, index) => {
           let value = row[index];
           
           // Skip null values for optional fields
-          if (value === null && !requiredFields.includes(header)) {
+          if (value === null && !requiredFields.includes(header as string)) {
             return;
           }
 
@@ -402,6 +432,18 @@ export function AdminPanel() {
       e.target.value = '';
     }
   };
+
+  if (authChecking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6">

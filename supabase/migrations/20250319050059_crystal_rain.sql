@@ -32,7 +32,7 @@ WITH format_data AS (
       ('Optional Fields', 'occasion_tags', 'text[]', 'Array of occasions ["casual", "formal", "party", "work", "vacation"]'),
       ('Optional Fields', 'style_tags', 'text[]', 'Array of styles ["classic", "modern", "bohemian", "elegant", "minimalist"]'),
       ('Optional Fields', 'seasonal_tags', 'text[]', 'Array of seasons ["spring", "summer", "fall", "winter"]'),
-      ('Optional Fields', 'size_range', 'text[]', 'Array of sizes ["XS", "S", "M", "L", "XL", "XXL"]'),
+      ('Optional Fields', 'sizes', 'text[]', 'Array of sizes ["XS", "S", "M", "L", "XL", "XXL"]'),
       ('Optional Fields', 'fabric_composition', 'jsonb', 'Material composition as percentage object {"cotton": 95, "elastane": 5}'),
       ('Optional Fields', 'care_instructions', 'text[]', 'Array of care instructions ["machine wash", "dry clean", "hand wash"]')
     ) AS t(section, field, type, description)

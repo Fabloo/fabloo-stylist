@@ -17,8 +17,6 @@ type CartItem = {
     price: number;
     description: string;
     image_url: string;
-    image_url_2: string;
-    image_url_3: string;
     sizes: string[];
     body_shapes: string[];
     color_tones: string[];
@@ -132,8 +130,6 @@ export function Checkout({ onSuccess }: Props) {
             price,
             description,
             image_url,
-            image_url_2,
-            image_url_3,
             sizes,
             body_shapes,
             color_tones,
