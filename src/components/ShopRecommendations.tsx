@@ -5,7 +5,7 @@ import { getStyleRecommendations } from '../utils/styleRecommendations';
 import { useCartStore } from '../store';
 import { ProductDetail } from './ProductDetail';
 import { supabase } from '../lib/supabase';
-
+import { useCart } from '../hooks/useCart';
 type Props = {
   bodyShape: BodyShape;
   skinTone: SkinTone;
@@ -24,6 +24,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
   const [dresses, setDresses] = useState<DressItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToCart: addToCartStore } = useCartStore();
+  const { fetchCart } = useCart();
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const [cartSuccess, setCartSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,10 +61,26 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
       setError(null);
       setCartSuccess(null);
 
-      // Use cart store to add item
-      await addToCartStore(itemId, 1);
+      // Get the current user's ID from the session
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+
+      if (!userId) {
+        throw new Error('User not found');
+      }
+
+      // Insert into cart table with proper conflict handling
+      const { error } = await supabase
+        .from('cart_items')
+        .upsert(
+          { user_id: userId, item_id: itemId, quantity: 1 },
+          { onConflict: 'user_id,item_id' }
+        );
+
+      if (error) throw error;
 
       setCartSuccess(itemId);
+      await fetchCart();
       setTimeout(() => {
         setCartSuccess(null);
       }, 1000);
@@ -97,37 +114,39 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
 
         let filteredDresses = data;
 
+
         // Apply filters based on selection
         if (filterType === 'style') {
           filteredDresses = data.filter(item => {
             if (!item.item_attributes || !Array.isArray(item.item_attributes)) return false;
             const attributes = item.item_attributes[0];
-            return attributes && Array.isArray(attributes.body_shapes) && 
-                   attributes.body_shapes.includes(bodyShape);
+            if (!attributes || !attributes.body_shapes) return false;
+            
+            // Split the combined string into an array, trim whitespace, and convert to lowercase
+            const bodyShapes = attributes.body_shapes[0].split(';').map(shape => shape.trim().toLowerCase());
+            return bodyShapes.includes(bodyShape.toLowerCase());
           });
         } else if (filterType === 'color') {
           filteredDresses = data.filter(item => {
             if (!item.item_attributes || !Array.isArray(item.item_attributes)) return false;
             const attributes = item.item_attributes[0];
-            return attributes && Array.isArray(attributes.color_tones) && 
-                   attributes.color_tones.includes(skinTone.season);
+            if (!attributes || !attributes.color_tones) return false;
+            
+            // Split the combined string into an array, trim whitespace, and convert to lowercase
+            const colorTones = attributes.color_tones[0].split(';').map((tone: string) => tone.trim().toLowerCase());
+            return colorTones.includes(skinTone.season.toLowerCase());
           });
         } else {
+          // For 'all' filter type
           filteredDresses = data.filter(item => {
-          if (!item.item_attributes || !Array.isArray(item.item_attributes)) {
-            return false;
-          }
-          
-          const attributes = item.item_attributes[0];
-          if (!attributes) return false;
-          
-          return (
-            Array.isArray(attributes.body_shapes) &&
-            Array.isArray(attributes.color_tones) &&
-            attributes.body_shapes.includes(bodyShape) &&
-            attributes.color_tones.includes(skinTone.season)
-          );
-        });
+            if (!item.item_attributes || !Array.isArray(item.item_attributes)) return false;
+            const attributes = item.item_attributes[0];
+            if (!attributes || !attributes.body_shapes || !attributes.color_tones) return false;
+            
+            const bodyShapes = attributes.body_shapes[0].split(';').map((shape: string) => shape.trim().toLowerCase());
+            const colorTones = attributes.color_tones[0].split(';').map((tone: string) => tone.trim().toLowerCase());
+            return bodyShapes.includes(bodyShape.toLowerCase()) && colorTones.includes(skinTone.season.toLowerCase());
+          });
         }
 
         setDresses(filteredDresses);
@@ -158,6 +177,8 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
       </div>
     );
   }
+
+   console.log(dresses);
 
   return (
     <div className="bg-white p-4 md:p-6">

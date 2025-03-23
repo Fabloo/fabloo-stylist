@@ -17,11 +17,6 @@ type CartItem = {
     price: number;
     description: string;
     image_url: string;
-    sizes: string[];
-    body_shapes: string[];
-    color_tones: string[];
-    dress_type: string[];
-    stock: number;
   };
 };
 
@@ -129,11 +124,7 @@ export function Checkout({ onSuccess }: Props) {
             name,
             price,
             description,
-            image_url,
-            sizes,
-            body_shapes,
-            color_tones,
-            dress_type
+            image_url
           )
         `)
         .eq('user_id', user.id);
