@@ -369,7 +369,7 @@ export function AdminPanel() {
           
           if (header === 'color_tones' && typeof value === 'string') {
             // Handle color tones like "cool neutral" or "cool warm"
-            value = [value.trim()];
+            value = value.split(';').map(tone => tone.trim());
           }
 
           // Parse other arrays and objects if the value is a string

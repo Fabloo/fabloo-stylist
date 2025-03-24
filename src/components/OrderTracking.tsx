@@ -76,18 +76,14 @@ export function OrderTracking({ orderId, onBack }: Props) {
               name,
               description,
               image_url,
-              image_url_2,
-              image_url_3,
-              sizes,
-              body_shapes,
-              color_tones,
-              dress_type,
-              stock
+              sizes
             )
           )
         `)
         .eq('id', orderId)
         .single();
+
+        console.log("orderData", orderData)
 
       if (orderError) throw orderError;
       if (!orderData) throw new Error('Order not found');

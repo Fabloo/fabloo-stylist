@@ -30,7 +30,7 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex-shrink-0 flex items-center">
@@ -65,7 +65,6 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </nav>
 
-      {/* Cart Sidebar */}
       {isCartOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
@@ -109,7 +108,7 @@ export function Layout({ children }: LayoutProps) {
                                   <div className="flex justify-between text-base font-medium text-gray-900">
                                     <h3>{item.inventory_items.name}</h3>
                                     <p className="ml-4">
-                                      ${item.inventory_items.price * item.quantity}
+                                     ₹{item.inventory_items.price * item.quantity}
                                     </p>
                                   </div>
                                 </div>

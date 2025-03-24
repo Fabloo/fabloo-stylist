@@ -23,6 +23,7 @@ type DressItem = {
 export function ShopRecommendations({ bodyShape, skinTone }: Props) {
   const [dresses, setDresses] = useState<DressItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(8);
   const { addToCart: addToCartStore } = useCartStore();
   const { fetchCart } = useCart();
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
@@ -123,7 +124,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
             if (!attributes || !attributes.body_shapes) return false;
             
             // Split the combined string into an array, trim whitespace, and convert to lowercase
-            const bodyShapes = attributes.body_shapes[0].split(';').map(shape => shape.trim().toLowerCase());
+            const bodyShapes = attributes.body_shapes[0].split(',').map((shape: string) => shape.trim().toLowerCase());
             return bodyShapes.includes(bodyShape.toLowerCase());
           });
         } else if (filterType === 'color') {
@@ -143,11 +144,12 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
             const attributes = item.item_attributes[0];
             if (!attributes || !attributes.body_shapes || !attributes.color_tones) return false;
             
-            const bodyShapes = attributes.body_shapes[0].split(';').map((shape: string) => shape.trim().toLowerCase());
-            const colorTones = attributes.color_tones[0].split(';').map((tone: string) => tone.trim().toLowerCase());
+            const bodyShapes = attributes.body_shapes[0].split(',').map((shape: string) => shape.trim().toLowerCase());
+            const colorTones = attributes.color_tones[0].split(',').map((tone: string) => tone.trim().toLowerCase());
             return bodyShapes.includes(bodyShape.toLowerCase()) && colorTones.includes(skinTone.season.toLowerCase());
           });
         }
+        console.log(filteredDresses);
 
         setDresses(filteredDresses);
       } catch (err) {
@@ -330,17 +332,17 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
         )
       } */}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
+<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
         {dresses.length === 0 && (
           <div className="col-span-full text-center py-8">
             <p className="text-gray-600">No matching dresses found for your style profile.</p>
           </div>
         )}
-        {dresses.slice(0, 8).map((dress) => (
+        {dresses.slice(0, visibleCount).map((dress) => (
           <div
             key={dress.id}
             className="group relative bg-white cursor-pointer rounded-lg overflow-hidden
-                     hover:shadow-lg transition-shadow duration-200"
+                       hover:shadow-lg transition-shadow duration-200"
             onClick={() => setSelectedProduct(dress.id)}
           >
             <div className="aspect-[3/4] overflow-hidden relative">
@@ -348,11 +350,11 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                 src={dress.image_url}
                 alt={dress.name}
                 className="w-full h-full object-cover transform group-hover:scale-105
-                         transition-transform duration-200"
+                           transition-transform duration-200"
               />
               {dress.stock < 5 && dress.stock > 0 && (
                 <span className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1
-                              text-xs font-medium rounded">
+                                 text-xs font-medium rounded">
                   Only {dress.stock} left
                 </span>
               )}
@@ -361,10 +363,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
               <h4 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
                 {dress.name}
               </h4>
-               <p className="text-sm text-gray-600 mb-3">
+              <p className="text-sm text-gray-600 mb-3">
                 {dress.description.slice(0, 50)}...
-               </p>
-            <p className="text-sm font-medium text-gray-900 mb-3">₹{dress.price}</p>
+              </p>
+              <p className="text-sm font-medium text-gray-900 mb-3">₹{dress.price}</p>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -372,9 +374,9 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                 }}
                 disabled={addingToCart === dress.id || !isAuthenticated}
                 className="w-full py-2 bg-indigo-600 text-white text-sm font-medium
-                         rounded-lg hover:bg-indigo-700 transition-colors duration-200
-                         disabled:opacity-50 disabled:cursor-not-allowed flex items-center
-                         justify-center gap-2"
+                           rounded-lg hover:bg-indigo-700 transition-colors duration-200
+                           disabled:opacity-50 disabled:cursor-not-allowed flex items-center
+                           justify-center gap-2"
               >
                 {addingToCart === dress.id ? (
                   'Adding...'
@@ -394,6 +396,20 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
           </div>
         ))}
       </div>
+
+      {/* Load More Button */}
+      {visibleCount < dresses.length && (
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={() => setVisibleCount(prev => prev + 8)}
+            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+          >
+            Load More
+          </button>
+        </div>
+      )}
+
+
 
       {/* Product Detail Modal */}
       {selectedProduct && (

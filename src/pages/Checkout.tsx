@@ -36,24 +36,24 @@ type Props = {
 };
 
 const PAYMENT_METHODS = [
-  {
-    id: 'upi',
-    name: 'UPI',
-    icon: CreditCard,
-    description: 'Pay using UPI apps like Google Pay, PhonePe, or Paytm'
-  },
-  {
-    id: 'card',
-    name: 'Credit/Debit Card',
-    icon: CreditCard,
-    description: 'Secure payment with credit or debit card'
-  },
-  {
-    id: 'netbanking',
-    name: 'Net Banking',
-    icon: CreditCard,
-    description: 'Pay directly from your bank account'
-  },
+  // {
+  //   id: 'upi',
+  //   name: 'UPI',
+  //   icon: CreditCard,
+  //   description: 'Pay using UPI apps like Google Pay, PhonePe, or Paytm'
+  // },
+  // {
+  //   id: 'card',
+  //   name: 'Credit/Debit Card',
+  //   icon: CreditCard,
+  //   description: 'Secure payment with credit or debit card'
+  // },
+  // {
+  //   id: 'netbanking',
+  //   name: 'Net Banking',
+  //   icon: CreditCard,
+  //   description: 'Pay directly from your bank account'
+  // },
   {
     id: 'cod',
     name: 'Cash on Delivery',
@@ -421,7 +421,7 @@ export function Checkout({ onSuccess }: Props) {
         {/* Payment Method & Order Summary */}
         <div className="space-y-8">
           {/* Payment Methods */}
-          {/* <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="bg-white p-6 rounded-xl shadow-sm">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
               Payment Method
@@ -461,7 +461,7 @@ export function Checkout({ onSuccess }: Props) {
                 </label>
               ))}
             </div>
-          </div> */}
+          </div>
 
           {/* Order Summary */}
           <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -472,7 +472,8 @@ export function Checkout({ onSuccess }: Props) {
             ) : cartItems.length === 0 ? (
               <p className="text-center text-gray-500">Your cart is empty</p>
             ) : (
-              <div className="space-y-4">
+              <div className="">
+                <div className="flex flex-col gap-4 h-64 overflow-y-auto">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center gap-4">
                     <img
@@ -491,7 +492,7 @@ export function Checkout({ onSuccess }: Props) {
                     </p>
                   </div>
                 ))}
-
+                </div>
                 <div className="border-t pt-4 mt-4">
                   <div className="flex justify-between text-sm text-gray-600 mb-2">
                     <span>Subtotal</span>

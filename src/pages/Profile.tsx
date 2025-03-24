@@ -59,10 +59,14 @@ export function Profile() {
         .order('created_at', { ascending: false })
         .limit(10);
 
+        
+
       if (error) {
         console.error('Error fetching orders:', error);
         throw new Error('Failed to fetch orders');
       }
+
+      console.log("order", data)
 
       setOrders(data || []);
     } catch (err) {
@@ -216,7 +220,7 @@ export function Profile() {
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className="font-medium text-gray-900">
-                          ${order.total_amount}
+                          ₹{order.total_amount}
                         </p>
                         <p className="text-sm text-gray-600 capitalize">
                           {order.order_status}
