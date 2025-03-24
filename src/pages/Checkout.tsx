@@ -287,131 +287,141 @@ export function Checkout({ onSuccess }: Props) {
             Shipping Address
           </h2>
 
-          <div className="space-y-4">
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                <User className="w-4 h-4" />
-                Full Name
-              </label>
-              <input
-                type="text"
-                name="fullName"
-                value={address.fullName}
-                onChange={handleAddressChange}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-                required
-              />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  {/* Full Name */}
+  <div>
+    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+      <User className="w-4 h-4 text-indigo-600" />
+      Full Name
+    </label>
+    <input
+      type="text"
+      name="fullName"
+      value={address.fullName}
+      onChange={handleAddressChange}
+      className="w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+      required
+    />
+  </div>
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                <MapPin className="w-4 h-4" />
-                Address Line 1
-              </label>
-              <input
-                type="text"
-                name="addressLine1"
-                value={address.addressLine1}
-                onChange={handleAddressChange}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-                required
-              />
-            </div>
+  {/* Phone Number */}
+  <div>
+    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+      <Phone className="w-4 h-4 text-indigo-600" />
+      Phone Number
+    </label>
+    <input
+      type="tel"
+      name="phone"
+      value={address.phone}
+      onChange={handleAddressChange}
+      pattern="\d{10}"
+      maxLength={10}
+      className="w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+      required
+    />
+  </div>
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                Address Line 2 (Optional)
-              </label>
-              <input
-                type="text"
-                name="addressLine2"
-                value={address.addressLine2}
-                onChange={handleAddressChange}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+  {/* Email */}
+  <div>
+    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+      <Mail className="w-4 h-4 text-indigo-600" />
+      Email
+    </label>
+    <input
+      type="email"
+      name="email"
+      value={address.email}
+      onChange={handleAddressChange}
+      className="w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+      required
+    />
+  </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1">City</label>
-                <input
-                  type="text"
-                  name="city"
-                  value={address.city}
-                  onChange={handleAddressChange}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1">State</label>
-                <select
-                  name="state"
-                  value={address.state}
-                  onChange={handleAddressChange}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  required
-                >
-                  <option value="">Select State</option>
-                  {STATES.map(state => (
-                    <option key={state} value={state}>{state}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+  {/* PIN Code */}
+  <div>
+    <label className="text-sm font-medium text-gray-700 mb-1">PIN Code</label>
+    <input
+      type="text"
+      name="pincode"
+      value={address.pincode}
+      onChange={handleAddressChange}
+      pattern="\d{6}"
+      maxLength={6}
+      className="w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+      required
+    />
+  </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1">PIN Code</label>
-              <input
-                type="text"
-                name="pincode"
-                value={address.pincode}
-                onChange={handleAddressChange}
-                pattern="\d{6}"
-                maxLength={6}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-                required
-              />
-            </div>
+  {/* Address Line 1 */}
+  <div className="md:col-span-2">
+    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+      <MapPin className="w-4 h-4 text-indigo-600" />
+      Address Line 1
+    </label>
+    <input
+      type="text"
+      name="addressLine1"
+      value={address.addressLine1}
+      onChange={handleAddressChange}
+      className="w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+      required
+    />
+  </div>
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                <Phone className="w-4 h-4" />
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={address.phone}
-                onChange={handleAddressChange}
-                pattern="\d{10}"
-                maxLength={10}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-                required
-              />
-            </div>
+  {/* Address Line 2 */}
+  <div className="md:col-span-2">
+    <label className="text-sm font-medium text-gray-700 mb-1">
+      Address Line 2 (Optional)
+    </label>
+    <input
+      type="text"
+      name="addressLine2"
+      value={address.addressLine2}
+      onChange={handleAddressChange}
+      className="w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+    />
+  </div>
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                <Mail className="w-4 h-4" />
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={address.email}
-                onChange={handleAddressChange}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-                required
-              />
-            </div>
-          </div>
+  {/* City */}
+  <div>
+    <label className="text-sm font-medium text-gray-700 mb-1">City</label>
+    <input
+      type="text"
+      name="city"
+      value={address.city}
+      onChange={handleAddressChange}
+      className="w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+      required
+    />
+  </div>
+
+  {/* State */}
+  <div>
+    <label className="text-sm font-medium text-gray-700 mb-1">State</label>
+    <select
+      name="state"
+      value={address.state}
+      onChange={handleAddressChange}
+      className="w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+      required
+    >
+      <option value="">Select State</option>
+      {STATES.map(state => (
+        <option key={state} value={state}>
+          {state}
+        </option>
+      ))}
+    </select>
+  </div>
+</div>
+
         </div>
 
         {/* Payment Method & Order Summary */}
         <div className="space-y-8">
           {/* Payment Methods */}
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          {/* <div className="bg-white p-6 rounded-xl shadow-sm">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
               Payment Method
@@ -451,7 +461,7 @@ export function Checkout({ onSuccess }: Props) {
                 </label>
               ))}
             </div>
-          </div>
+          </div> */}
 
           {/* Order Summary */}
           <div className="bg-white p-6 rounded-xl shadow-sm">

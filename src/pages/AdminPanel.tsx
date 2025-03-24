@@ -363,8 +363,8 @@ export function AdminPanel() {
           }
           
           if (header === 'sizes' && typeof value === 'string') {
-            // Handle sizes like "XS;S;M;L;XL;XXL"
-            value = value.split(';').map(size => size.trim());
+            // Handle sizes like "XS,S,M L;XL;XXL"
+            value = value.split(',').map(size => size.trim());
           }
           
           if (header === 'color_tones' && typeof value === 'string') {
@@ -430,6 +430,38 @@ export function AdminPanel() {
       setFileProcessing(false);
       // Reset file input
       e.target.value = '';
+    }
+  };
+
+  const handleDeleteAllInventory = async () => {
+    // Double confirmation to prevent accidents
+    if (!confirm('Are you sure you want to delete ALL inventory items? This action cannot be undone.')) {
+      return;
+    }
+    
+    if (!confirm('FINAL WARNING: This will permanently delete all inventory items. Continue?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Delete all records from inventory_items
+      // This will cascade delete related records in item_attributes due to foreign key constraints
+      const { error } = await supabase
+        .from('inventory_items')
+        .delete()
+        .neq('id', ''); // This will match all records
+
+      if (error) throw error;
+      
+      setUploadSuccess('Successfully deleted all inventory items');
+      fetchInventory(); // Refresh the empty inventory list
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete inventory items');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -574,6 +606,13 @@ export function AdminPanel() {
                     <Download className="w-4 h-4" />
                     Template
                   </a>
+                  <button
+                    onClick={handleDeleteAllInventory}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 
+                              transition-colors flex items-center gap-2"
+                  >
+                    Delete All
+                  </button>
                 </div>
               )}
             </div>
@@ -809,19 +848,21 @@ export function AdminPanel() {
                   </div>
                 </div>
               )}
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-3 gap-6">
                 {inventory.map((item) => (
-                  <div key={item.id} className="border rounded-lg overflow-hidden">
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      className="w-full h-48 object-cover"
-                    />
+                  <div key={item.id} className="border  rounded-lg overflow-hidden">
+                    <div className="h-[400px]">
+                      <img
+                        src={item.image_url}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                     <div className="p-4">
                       <h3 className="font-medium text-gray-900">{item.name}</h3>
                       <p className="text-sm text-gray-600 mb-2">{item.description}</p>
                       <div className="flex justify-between items-center mb-4">
-                        <p className="font-medium text-gray-900">${item.price}</p>
+                        <p className="font-medium text-gray-900">₹{item.price}</p>
                         <p className="text-sm text-gray-600">Stock: {item.stock}</p>
                       </div>
                       <div className="space-y-2">

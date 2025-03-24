@@ -3,7 +3,7 @@ import { ShoppingBag, Check, AlertCircle, Filter, Sparkles, Palette } from 'luci
 import type { BodyShape, SkinTone } from '../types';
 import { getStyleRecommendations } from '../utils/styleRecommendations';
 import { useCartStore } from '../store';
-import { ProductDetail } from './ProductDetail';
+import { ProductDetail } from '../pages/ProductDetail';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../hooks/useCart';
 type Props = {
@@ -361,7 +361,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
               <h4 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
                 {dress.name}
               </h4>
-              <p className="text-sm font-medium text-gray-900 mb-3">${dress.price}</p>
+               <p className="text-sm text-gray-600 mb-3">
+                {dress.description.slice(0, 50)}...
+               </p>
+            <p className="text-sm font-medium text-gray-900 mb-3">₹{dress.price}</p>
               <button
                 onClick={(e) => {
                   e.stopPropagation();

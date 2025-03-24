@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Package, ChevronDown } from 'lucide-react';
-import { OrderTracking } from './OrderTracking';
+import { OrderTracking } from '../components/OrderTracking';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';

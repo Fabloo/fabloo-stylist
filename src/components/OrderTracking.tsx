@@ -258,7 +258,7 @@ export function OrderTracking({ orderId, onBack }: Props) {
                 <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
               </div>
               <p className="font-medium text-gray-900">
-                ${(item.price * item.quantity).toFixed(2)}
+                ₹{(item.price * item.quantity).toFixed(2)}
               </p>
             </div>
           ))}

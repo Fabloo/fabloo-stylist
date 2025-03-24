@@ -3,7 +3,7 @@ import { ShoppingBag, User, X, CreditCard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
-import { Checkout } from './Checkout';
+import { Checkout } from '../pages/Checkout';
 import { useAuth } from '../hooks/useAuth';
 
 type LayoutProps = {
@@ -160,7 +160,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Checkout Modal */}
       {isCheckoutOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+          <div className="absolute inset-0 bg-gray-500 h-full bg-opacity-75 transition-opacity" 
                onClick={() => setIsCheckoutOpen(false)} />
           
           <div className="flex min-h-full items-center justify-center p-4">
