@@ -359,12 +359,12 @@ export function AdminPanel() {
           // Special handling for body_shapes, sizes, and color_tones
           if (header === 'body_shapes' && typeof value === 'string') {
             // Convert comma-separated list to array, handle spaces properly
-            value = value.split(',').map(shape => shape.trim());
+            value = value.split(';').map(shape => shape.trim());
           }
           
           if (header === 'sizes' && typeof value === 'string') {
             // Handle sizes like "XS,S,M L;XL;XXL"
-            value = value.split(',').map(size => size.trim());
+            value = value.split(';').map(size => size.trim());
           }
           
           if (header === 'color_tones' && typeof value === 'string') {
@@ -675,7 +675,7 @@ export function AdminPanel() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-900">
-                        ${order.total_amount}
+                        ₹{order.total_amount}
                       </p>
                       <p className="text-sm text-gray-600">
                         {order.shipping_address.fullName}
