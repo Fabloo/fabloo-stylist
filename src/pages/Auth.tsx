@@ -7,7 +7,7 @@ type Props = {
 };
 
 export function Auth({ onSuccess }: Props) {
-  const [phone, setPhone] = useState('+91');
+  const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -92,7 +92,7 @@ export function Auth({ onSuccess }: Props) {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="+91 XXXXX XXXXX"
+                placeholder="+1234567890"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 required
               />
