@@ -95,7 +95,7 @@ export function Profile() {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
         <div className="flex items-center justify-center gap-2 animate-pulse">
-          <div className="w-4 h-4 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+          <div className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
           <p className="text-lg text-gray-600">Loading profile...</p>
         </div>
       </div>
@@ -108,7 +108,7 @@ export function Profile() {
         <p className="text-lg text-gray-600 mb-4">Please sign in to view your profile</p>
         <button
           onClick={() => navigate('/auth')}
-          className="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-black 
                    hover:text-indigo-700"
         >
           Sign In
@@ -175,7 +175,7 @@ export function Profile() {
                 onClick={() => navigate('/recommendations')}
                 className="w-full flex justify-center items-center px-6 py-3 border
                          border-transparent rounded-md shadow-sm text-base font-medium
-                         text-white bg-indigo-600 hover:bg-indigo-700"
+                         text-white bg-black hover:bg-indigo-700"
               >
                 View Style Recommendations
               </button>

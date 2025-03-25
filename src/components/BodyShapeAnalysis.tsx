@@ -159,7 +159,7 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
 
   if (isAnalyzing) {
     return (
-      <div className="max-w-2xl mx-auto text-center">
+      <div className="max-w-2xl mx-auto text-center mt-10">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">Analyzing...</h2>
         <p className="text-lg text-gray-600">Please wait while we process your information.</p>
       </div>
@@ -168,7 +168,7 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
 
   if (!method) {
     return (
-      <div className="max-w-2xl mx-auto text-center">
+      <div className="max-w-2xl mx-auto text-center mt-10">
         
 
         <h2 className="text-3xl font-bold text-gray-900 mb-4">Body Shape Analysis</h2>
@@ -182,14 +182,7 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
           className="w-64 mx-auto mb-8"
         />
         <div className="flex flex-col gap-4 max-w-sm mx-auto mb-8">
-          <button
-            onClick={() => setMethod('quiz')}
-            className="flex items-center justify-center gap-3 p-6 bg-indigo-600 
-                     text-white rounded-xl hover:bg-indigo-700 transition-colors"
-          >
-            <ClipboardList className="w-6 h-6" />
-            <span className="text-lg font-medium">Take Quiz</span>
-          </button>
+
 
           <label className="flex items-center justify-center gap-3 p-6 bg-gray-900
                      text-white rounded-xl hover:bg-gray-800 transition-colors cursor-pointer"
@@ -204,6 +197,15 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
             />
           </label>
 
+          <button
+            onClick={() => setMethod('quiz')}
+            className="flex items-center justify-center gap-3 p-6 border-2 border-secondary 
+                     text-secondary rounded-xl hover:bg-secondary/20 transition-colors"
+          >
+            <ClipboardList className="w-6 h-6" />
+            <span className="text-lg font-medium">Take Quiz</span>
+          </button>
+
           {error && (
             <div className="p-4 bg-red-50 text-red-700 rounded-lg">
               {error}
@@ -216,7 +218,7 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
 
   if (method === 'quiz') {
     return (
-      <div className="max-w-2xl mx-auto text-center">
+      <div className="max-w-2xl mx-auto text-center mt-10">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">Body Shape Quiz</h2>
         <p className="text-lg text-gray-600 mb-6">
           Question {currentQuestion + 1} of {QUIZ_QUESTIONS.length}
@@ -257,14 +259,14 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
       <div className="grid grid-cols-2 gap-4 mb-8">
         <button
           onClick={() => setMethod('quiz')}
-          className="flex items-center justify-center gap-3 p-6 bg-indigo-600 
+          className="flex items-center justify-center gap-3 p-6 bg-black 
                    text-white rounded-xl hover:bg-indigo-700 transition-colors"
         >
           <ClipboardList className="w-6 h-6" />
           <span className="text-lg font-medium">Take Quiz</span>
         </button>
 
-        <label className="flex items-center justify-center gap-3 p-6 bg-indigo-600
+        <label className="flex items-center justify-center gap-3 p-6 bg-black
                        text-white rounded-xl hover:bg-indigo-700 transition-colors cursor-pointer">
           <Upload className="w-6 h-6" />
           <span className="text-lg font-medium">Upload Photo</span>

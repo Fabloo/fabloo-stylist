@@ -136,7 +136,7 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
         <div className="space-y-4">
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-indigo-600 rounded-full transition-all duration-1000"
+              className="h-full bg-black rounded-full transition-all duration-1000"
               style={{ width: '60%' }}
             />
           </div>
@@ -171,7 +171,7 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
 
           <button
             onClick={() => setMethod('quiz')}
-            className="w-full flex items-center justify-center gap-3 p-6 bg-indigo-600 
+            className="w-full flex items-center justify-center gap-3 p-6 bg-black 
                      text-white rounded-xl hover:bg-indigo-700 transition-colors"
           >
             <ClipboardList className="w-6 h-6" />
@@ -184,39 +184,71 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
 
   if (!method) {
     return (
-      <div className="max-w-2xl mx-auto text-center">
+      <div className="max-w-2xl mx-auto text-center mt-10">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">Skin Tone Analysis</h2>
-        <p className="text-lg text-gray-600 mb-8">
+        <h4 className="text-lg text-gray-600 mb-6">Determine your Clothing Colors by your Color Type</h4>
+        {/* <p className="text-lg text-gray-600 mb-8">
           Choose your preferred method to determine your skin tone
-        </p>
+        </p> */}
+
+<div className="bg-white p-4 rounded-xl shadow-sm">
+            <div className="flex justify-center mb-2">
+            <div className="relative aspect-square mx-auto">
+  {/* Color Wheel (SVG) */}
+  <svg viewBox="0 0 100 100" className="w-full h-full">
+    <path d="M 50,50 L 100,50 A 50,50 0 0,1 93.3,75 Z" fill="#2563eb" /> {/* blue-600 */}
+    <path d="M 50,50 L 93.3,75 A 50,50 0 0,1 75,93.3 Z" fill="#581c87" /> {/* purple-900 */}
+    <path d="M 50,50 L 75,93.3 A 50,50 0 0,1 50,100 Z" fill="#5eead4" /> {/* teal-300 */}
+    <path d="M 50,50 L 50,100 A 50,50 0 0,1 25,93.3 Z" fill="#e11d48" /> {/* rose-600 */}
+    <path d="M 50,50 L 25,93.3 A 50,50 0 0,1 6.7,75 Z" fill="#7dd3fc" /> {/* sky-300 */}
+    <path d="M 50,50 L 6.7,75 A 50,50 0 0,1 0,50 Z" fill="#fef08a" /> {/* yellow-200 */}
+    <path d="M 50,50 L 0,50 A 50,50 0 0,1 6.7,25 Z" fill="#f9a8d4" /> {/* pink-300 */}
+    <path d="M 50,50 L 6.7,25 A 50,50 0 0,1 25,6.7 Z" fill="#e5e7eb" /> {/* gray-200 */}
+    <path d="M 50,50 L 25,6.7 A 50,50 0 0,1 50,0 Z" fill="#60a5fa" /> {/* blue-400 */}
+    <path d="M 50,50 L 50,0 A 50,50 0 0,1 75,6.7 Z" fill="#86efac" /> {/* green-300 */}
+    <path d="M 50,50 L 75,6.7 A 50,50 0 0,1 93.3,25 Z" fill="#c4b5fd" /> {/* violet-300 */}
+    <path d="M 50,50 L 93.3,25 A 50,50 0 0,1 100,50 Z" fill="#f9a8d4" /> {/* pink-200 */}
+  </svg>
+
+  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+    <img
+      src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742234094/Frame_1000003729_yhgkns.png" // Replace with actual image
+      alt="Center Image"
+      className="w-32 h-32 rounded-full border-2 border-white shadow-lg object-cover"
+    />
+  </div>
+</div>
+            </div>
+            <p className="text-gray-800 text-sm font-medium">Shades That Shine On You</p>
+          </div>
         
         {/* Guidelines Section */}
-        <div className="bg-gray-50 p-6 rounded-xl mb-8">
+        {/* <div className="bg-gray-50 p-6 rounded-xl mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Guidelines for Good Results</h3>
           <ul className="space-y-3 text-left max-w-md mx-auto">
             <li className="flex items-center gap-2 text-gray-700">
-              <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
+              <span className="w-1.5 h-1.5 bg-black rounded-full" />
               Remove glasses
             </li>
             <li className="flex items-center gap-2 text-gray-700">
-              <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
+              <span className="w-1.5 h-1.5 bg-black rounded-full" />
               Use natural light
             </li>
             <li className="flex items-center gap-2 text-gray-700">
-              <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
+              <span className="w-1.5 h-1.5 bg-black rounded-full" />
               Keep neutral expression
             </li>
             <li className="flex items-center gap-2 text-gray-700">
-              <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
+              <span className="w-1.5 h-1.5 bg-black rounded-full" />
               Look directly at the camera
             </li>
           </ul>
-        </div>
+        </div> */}
 
         <div className="flex flex-col gap-4 max-w-sm mx-auto mb-8">
           <button
             onClick={() => setMethod('quiz')}
-            className="flex flex-col items-center justify-center p-6 bg-indigo-600
+            className="flex gap-1 items-center justify-center p-6 bg-black
                      text-white rounded-xl hover:bg-indigo-700 transition-colors"
           >
             <ClipboardList className="w-8 h-8 text-white-600 mb-2" />
@@ -264,11 +296,11 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
 
   if (method === 'quiz') {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto mt-10 p-4">
         <h2 className="text-3xl font-bold text-gray-900 mb-4 text-center">
           Quick Skin Tone Quiz
         </h2>
-        <p className="text-lg text-gray-600 mb-8">
+        <p className="text-lg text-center text-gray-600 mb-8">
           Question {currentQuestion + 1} of {QUIZ_QUESTIONS.length}
         </p>
         

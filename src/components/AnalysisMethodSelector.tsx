@@ -44,7 +44,7 @@ export function AnalysisMethodSelector({ onSelect }: Props) {
           className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow
                      border border-gray-100 text-left"
         >
-          <div className="text-indigo-600 mb-4">{method.icon}</div>
+          <div className="text-black mb-4">{method.icon}</div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             {method.title}
           </h3>

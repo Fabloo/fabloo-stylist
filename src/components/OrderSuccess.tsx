@@ -24,7 +24,7 @@ export function OrderSuccess() {
           onClick={() => navigate('/profile')}
           className="w-full flex justify-center items-center px-6 py-3 border
                    border-transparent rounded-lg shadow-sm text-base font-medium
-                   text-white bg-indigo-600 hover:bg-indigo-700"
+                   text-white bg-black hover:bg-indigo-700"
         >
           View Order Status
         </button>

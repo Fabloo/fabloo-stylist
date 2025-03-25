@@ -35,6 +35,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [colorPalette, setColorPalette] = useState<any>(null);
   const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
+  const [sizeModalOpen, setSizeModalOpen] = useState<string | null>(null);
 
   useEffect(() => {
     checkSession();
@@ -100,6 +101,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
           return newSizes;
         });
       }, 1000);
+      setSizeModalOpen(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to add item to cart';
       setError(errorMessage);
@@ -248,10 +250,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
           {/* Color Palette Display */}
           {(filterType === 'color' || filterType === 'all') && colorPalette && (
             <div className="mb-8">
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div>
+              <div className="flex items-center justify-around gap-4 mb-4">
+                <div className="flex flex-col items-center justify-center">
                   <h5 className="text-xs font-medium text-gray-500 mb-2">Primary Colors</h5>
-                  <div className="flex gap-2">
+                  <div className="flex items-center justify-center gap-2">
                     {colorPalette.primary.map((color: string, i: number) => (
                       <div
                         key={i}
@@ -262,7 +264,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                     ))}
                   </div>
                 </div>
-                <div>
+                <div className="flex flex-col items-center justify-center">
                   <h5 className="text-xs font-medium text-gray-500 mb-2">Accent Colors</h5>
                   <div className="flex gap-2">
                     {colorPalette.accent.map((color: string, i: number) => (
@@ -275,7 +277,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                     ))}
                   </div>
                 </div>
-                <div>
+                <div className="flex flex-col items-center justify-center">
                   <h5 className="text-xs font-medium text-gray-500 mb-2">Neutral Colors</h5>
                   <div className="flex gap-2">
                     {colorPalette.neutral.map((color: string, i: number) => (
@@ -289,14 +291,14 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                   </div>
                 </div>
               </div>
-              <div className="text-sm text-gray-600">
+              {/* <div className="text-sm text-gray-600">
                 <p className="mb-2">How to use your color palette:</p>
                 <ul className="list-disc list-inside space-y-1 pl-4">
                   <li>Primary colors: Use for main pieces like dresses and tops</li>
                   <li>Accent colors: Perfect for accessories and statement pieces</li>
                   <li>Neutral colors: Great for basics and layering pieces</li>
                 </ul>
-              </div>
+              </div> */}
             </div>
           )}
           
@@ -358,6 +360,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
             key={dress.id}
             className="group relative bg-white rounded-lg overflow-hidden
                        hover:shadow-lg transition-shadow duration-200 flex flex-col"
+            onClick={() => setSelectedProduct(dress.id)}
           >
             {/* Product Image and View Details Button */}
             <div className="aspect-[3/4] overflow-hidden relative">
@@ -373,14 +376,14 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                   Only {dress.stock} left
                 </span>
               )}
-              <button
+              {/* <button
                 onClick={() => setSelectedProduct(dress.id)}
                 className="absolute bottom-2 right-2 bg-white/90 text-gray-800 px-3 py-1.5
                            text-xs font-medium rounded-lg hover:bg-white transition-colors
                            shadow-sm"
               >
                 View Details
-              </button>
+              </button> */}
             </div>
             
             {/* Product Info and Actions */}
@@ -394,9 +397,9 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                   <p className="text-lg font-semibold text-gray-900">₹{dress.price}</p>
                 </div>
 
-                <div className="mb-4">
+                {/* <div className="mb-4">
                   <p className="text-xs font-medium text-gray-600 mb-2">Select Size:</p>
-                  {/* Mobile Dropdown */}
+
                   <div className="md:hidden">
                     <select
                       value={selectedSizes[dress.id] || ''}
@@ -418,7 +421,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                     </select>
                   </div>
                   
-                  {/* Desktop Buttons */}
+
                   <div className="hidden md:flex flex-wrap gap-2">
                     {(typeof dress.sizes === 'string' ? JSON.parse(dress.sizes) : dress.sizes)?.map((size: string) => (
                       <button
@@ -434,7 +437,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                                  transition-colors focus:outline-none focus:ring-2 
                                  focus:ring-indigo-500 focus:ring-offset-1
                                  ${selectedSizes[dress.id] === size 
-                                   ? 'bg-indigo-600 text-white border-indigo-600' 
+                                   ? 'bg-black text-white border-black' 
                                    : 'border-gray-200 text-gray-600 hover:border-indigo-500 hover:text-indigo-500'
                                  }`}
                       >
@@ -445,22 +448,22 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                   {error && !selectedSizes[dress.id] && (
                     <p className="text-xs text-red-500 mt-1">Please select a size</p>
                   )}
-                </div>
+                </div> */}
 
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (!selectedSizes[dress.id]) {
-                      setError('Please select a size');
+                    if (!isAuthenticated) {
+                      setError('Please sign in to continue');
                       return;
                     }
-                    addToCart(dress.id);
+                    setSizeModalOpen(dress.id);
                   }}
-                  disabled={addingToCart === dress.id || !isAuthenticated || !selectedSizes[dress.id]}
-                  className={`w-full py-2.5 ${!selectedSizes[dress.id] ? 'bg-indigo-300' : 'bg-indigo-600'} text-white text-sm font-medium
-                           rounded-lg hover:bg-indigo-700 transition-colors duration-200
+                  disabled={addingToCart === dress.id}
+                  className="w-full py-2.5 bg-secondary text-white text-sm font-medium
+                           rounded-lg hover:bg-secondary/80 transition-colors duration-200
                            disabled:opacity-50 disabled:cursor-not-allowed flex items-center
-                           justify-center gap-2 shadow-sm`}
+                           justify-center gap-2 shadow-sm"
                 >
                   {addingToCart === dress.id ? (
                     'Adding...'
@@ -503,6 +506,101 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
             <div className="fixed inset-0 bg-black bg-opacity-25" onClick={() => setSelectedProduct(null)} />
             <div className="relative bg-white w-full max-w-4xl rounded-xl shadow-2xl">
               <ProductDetail id={selectedProduct} onClose={() => setSelectedProduct(null)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Size Selection Modal */}
+      {sizeModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" 
+              onClick={() => setSizeModalOpen(null)}
+            />
+            
+            <div className="relative bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden transform transition-all">
+              {/* Get the selected dress details */}
+              {(() => {
+                const selectedDress = dresses.find(d => d.id === sizeModalOpen);
+                if (!selectedDress) return null;
+                
+                return (
+                  <>
+                    {/* Responsive layout for the modal */}
+                    <div className="flex flex-col sm:flex-row">
+                      <div className="w-full sm:w-1/3 ">
+                        <img 
+                          src={selectedDress.image_url} 
+                          alt={selectedDress.name}
+                          className="h-64 sm:h-full w-full md:object-cover object-contain object-center"
+                        />
+                      </div>
+                      
+                      <div className="w-full sm:w-2/3 p-4 sm:p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">{selectedDress.name}</h3>
+                        <p className="text-xl font-bold text-gray-900 mb-4">₹{selectedDress.price}</p>
+                        
+                        <div className="mb-6">
+                          <p className="text-sm font-medium text-gray-700 mb-3">Select Your Size:</p>
+                          <div className="grid grid-cols-4 sm:grid-cols-3 gap-2">
+                            {(typeof selectedDress.sizes === 'string' ? JSON.parse(selectedDress.sizes) : selectedDress.sizes)?.map((size: string) => (
+                              <button
+                                key={size}
+                                onClick={() => {
+                                  setSelectedSizes(prev => ({
+                                    ...prev,
+                                    [sizeModalOpen]: size
+                                  }));
+                                }}
+                                className={`px-2 sm:px-3 py-2 text-sm font-medium border rounded-lg
+                                         transition-all focus:outline-none
+                                         ${selectedSizes[sizeModalOpen] === size 
+                                           ? 'bg-black text-white border-black shadow-md transform scale-105' 
+                                           : 'border-gray-300 text-gray-700 hover:border-indigo-500 hover:text-indigo-500'
+                                         }`}
+                              >
+                                {size}
+                              </button>
+                            ))}
+                          </div>
+                          {error && !selectedSizes[sizeModalOpen] && (
+                            <p className="text-xs text-red-500 mt-2">Please select a size</p>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-3 mt-4">
+                          <button
+                            onClick={() => setSizeModalOpen(null)}
+                            className="flex-1 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium
+                                     rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => addToCart(sizeModalOpen)}
+                            disabled={!selectedSizes[sizeModalOpen] || addingToCart === sizeModalOpen}
+                            className="flex-1 py-2.5 bg-black text-white text-sm font-medium
+                                     rounded-lg hover:bg-indigo-700 transition-colors
+                                     disabled:opacity-50 disabled:cursor-not-allowed flex items-center
+                                     justify-center gap-2"
+                          >
+                            {addingToCart === sizeModalOpen ? (
+                              'Adding...'
+                            ) : (
+                              <>
+                                <ShoppingBag className="w-4 h-4" />
+                                Add to Cart
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

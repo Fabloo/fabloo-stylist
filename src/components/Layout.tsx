@@ -1,10 +1,11 @@
 import React from 'react';
-import { ShoppingBag, User, X, CreditCard } from 'lucide-react';
+import { ShoppingBag, User, X, CreditCard, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
 import { Checkout } from '../pages/Checkout';
 import { useAuth } from '../hooks/useAuth';
+import { useWishlist } from '../hooks/useWishlist';
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -14,10 +15,12 @@ export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const { items: cartItems, isLoading, error, removeFromCart, totalItems, totalAmount } = useCart();
   const { isAuthenticated } = useAuth();
+  const { wishlistItems,  removeFromWishlist, loading } = useWishlist();
 
-  // Open cart will trigger cart fetch through useCart hook
+
   const handleCartOpen = () => {
     setIsCartOpen(true);
   };
@@ -28,8 +31,14 @@ export function Layout({ children }: LayoutProps) {
     setIsCartOpen(false);
   };
 
+  const handleWishlistOpen = () => {
+    setIsWishlistOpen(true);
+  };
+
+  console.log(wishlistItems);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-[60vh] bg-gray-50">
       <nav className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -43,13 +52,19 @@ export function Layout({ children }: LayoutProps) {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
+              {/* <button 
+                onClick={handleWishlistOpen}
+                className="p-2 rounded-full hover:bg-gray-100 relative"
+              >
+                <Heart className="w-6 h-6 text-gray-600" />
+              </button> */}
               <button 
                 onClick={handleCartOpen}
                 className="p-2 rounded-full hover:bg-gray-100 relative"
               >
                 <ShoppingBag className="w-6 h-6 text-gray-600" />
                 {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-indigo-600 text-white
+                  <span className="absolute -top-1 -right-1 bg-pink-400 text-white
                                  text-xs rounded-full w-5 h-5 flex items-center 
                                  justify-center">{totalItems}</span>
                 )}
@@ -105,7 +120,7 @@ export function Layout({ children }: LayoutProps) {
                 <p className="text-gray-500 text-lg">Your cart is empty</p>
                 <button 
                   onClick={() => setIsCartOpen(false)}
-                  className="mt-4 text-indigo-600 hover:text-indigo-500"
+                  className="mt-4 text-black hover:text-indigo-500"
                 >
                   Continue Shopping
                 </button>
@@ -126,7 +141,7 @@ export function Layout({ children }: LayoutProps) {
                     {/* Improved Details Layout */}
                     <div className="ml-4 flex-1 flex flex-col">
                       <div className="flex justify-between items-start">
-                        <h3 className="text-lg font-medium text-gray-900 hover:text-indigo-600 transition-colors duration-200">
+                        <h3 className="text-lg font-medium text-gray-900 hover:text-black transition-colors duration-200">
                           {item.inventory_items.name}
                         </h3>
                         <p className="text-lg font-semibold text-gray-800">
@@ -161,7 +176,7 @@ export function Layout({ children }: LayoutProps) {
           <div className="border-t border-gray-200 bg-gray-50 p-6">
             <div className="flex justify-between items-center mb-4">
               <span className="text-xl font-medium text-gray-800">Total</span>
-              <span className="text-xl font-bold text-indigo-600">
+              <span className="text-xl font-bold text-black">
                 ₹{totalAmount.toFixed(2)}
               </span>
             </div>
@@ -171,7 +186,7 @@ export function Layout({ children }: LayoutProps) {
             </p>
             <button
               onClick={handleCheckout}
-              className="w-full inline-flex items-center justify-center px-6 py-4 border border-transparent rounded-lg shadow-lg text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="w-full inline-flex items-center justify-center px-6 py-4 border border-transparent rounded-lg shadow-lg text-lg font-medium text-white bg-black hover:bg-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Proceed to Checkout
             </button>
@@ -209,7 +224,43 @@ export function Layout({ children }: LayoutProps) {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Wishlist Modal */}
+      {isWishlistOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="absolute inset-0 bg-gray-500 h-full bg-opacity-75 transition-opacity" 
+               onClick={() => setIsWishlistOpen(false)} />
+          
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl">
+              <button
+                onClick={() => setIsWishlistOpen(false)}
+                className="absolute right-4 top-4 text-gray-400 hover:text-gray-500"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <div className="p-6">
+                <h2 className="text-2xl font-bold">Your Wishlist</h2>
+                {loading ? (
+                  <p>Loading...</p>
+                ) : error ? (
+                  <p className="text-red-500">{error}</p>
+                ) : (
+                  <ul className="space-y-4">
+                    {wishlistItems.map((item) => (
+                      <li key={item.id} className="flex justify-between items-center">
+                        <span>{item.name}</span>
+                        <button onClick={() => removeFromWishlist(item.id)} className="text-red-500">Remove</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className="">
         {children}
       </main>
     </div>

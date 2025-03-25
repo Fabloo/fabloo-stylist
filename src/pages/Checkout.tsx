@@ -318,7 +318,7 @@ export function Checkout({ onSuccess }: Props) {
             <div className="flex flex-col items-center">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center
                 ${currentStep === step 
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-black text-white'
                   : 'bg-gray-200 text-gray-600'}`}>
                 {idx + 1}
               </div>
@@ -367,7 +367,7 @@ export function Checkout({ onSuccess }: Props) {
         return (
           <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              <Truck className="w-5 h-5 text-indigo-600" />
+              <Truck className="w-5 h-5 text-black" />
               Shipping Address
             </h2>
 
@@ -375,7 +375,7 @@ export function Checkout({ onSuccess }: Props) {
               {/* Full Name */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                  <User className="w-4 h-4 text-indigo-600" />
+                  <User className="w-4 h-4 text-black" />
                   Full Name
                 </label>
                 <input
@@ -393,7 +393,7 @@ export function Checkout({ onSuccess }: Props) {
               {/* Phone Number */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                  <Phone className="w-4 h-4 text-indigo-600" />
+                  <Phone className="w-4 h-4 text-black" />
                   Phone Number
                 </label>
                 <input
@@ -413,7 +413,7 @@ export function Checkout({ onSuccess }: Props) {
               {/* Email */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                  <Mail className="w-4 h-4 text-indigo-600" />
+                  <Mail className="w-4 h-4 text-black" />
                   Email
                 </label>
                 <input
@@ -448,7 +448,7 @@ export function Checkout({ onSuccess }: Props) {
               {/* Address Line 1 */}
               <div className="md:col-span-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                  <MapPin className="w-4 h-4 text-indigo-600" />
+                  <MapPin className="w-4 h-4 text-black" />
                   Address Line 1
                 </label>
                 <input
@@ -519,7 +519,7 @@ export function Checkout({ onSuccess }: Props) {
               <button
                 type="button"
                 onClick={nextStep}
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-indigo-700"
               >
                 Continue to Payment
               </button>
@@ -551,7 +551,7 @@ export function Checkout({ onSuccess }: Props) {
                     value={method.id}
                     checked={paymentMethod === method.id}
                     onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                    className="mt-1 h-4 w-4 text-black focus:ring-indigo-500"
                   />
                   <div>
                     <div className="flex items-center gap-2 font-medium text-gray-900">
@@ -574,7 +574,7 @@ export function Checkout({ onSuccess }: Props) {
               <button
                 type="button"
                 onClick={nextStep}
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-indigo-700"
               >
                 Continue to Review
               </button>
@@ -589,7 +589,7 @@ export function Checkout({ onSuccess }: Props) {
             
             {fetchingCart ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black" />
               </div>
             ) : cartItems.length === 0 ? (
               <p className="text-center text-gray-500">Your cart is empty</p>
@@ -656,7 +656,7 @@ export function Checkout({ onSuccess }: Props) {
               <button
                 type="submit"
                 disabled={loading || cartItems.length === 0}
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
               >
                 {loading ? 'Processing...' : 'Place Order'}
               </button>

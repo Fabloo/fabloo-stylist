@@ -137,7 +137,7 @@ export function CameraSkinToneAnalysis({ onSkinToneDetected, onError }: Props) {
         <button
           onClick={captureAndAnalyze}
           disabled={isCapturing}
-          className="px-6 py-3 bg-indigo-600 text-white rounded-full
+          className="px-6 py-3 bg-black text-white rounded-full
                    hover:bg-indigo-700 transition-colors disabled:opacity-50"
         >
           {isCapturing ? 'Analyzing...' : 'Capture and Analyze'}

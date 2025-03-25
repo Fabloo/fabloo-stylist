@@ -136,7 +136,7 @@ export function OrderTracking({ orderId, onBack }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black" />
       </div>
     );
   }
@@ -147,7 +147,7 @@ export function OrderTracking({ orderId, onBack }: Props) {
         <p className="text-red-600 mb-4">{error || 'Order not found'}</p>
         <button
           onClick={onBack}
-          className="text-indigo-600 hover:text-indigo-700"
+          className="text-black hover:text-indigo-700"
         >
           Go back
         </button>
@@ -180,7 +180,7 @@ export function OrderTracking({ orderId, onBack }: Props) {
           {/* Progress Bar */}
           <div className="h-1 bg-gray-200 absolute top-5 left-0 right-0">
             <div 
-              className="h-full bg-indigo-600 transition-all duration-500"
+              className="h-full bg-black transition-all duration-500"
               style={{ 
                 width: order.order_status === 'cancelled' 
                   ? '0%'
@@ -199,13 +199,13 @@ export function OrderTracking({ orderId, onBack }: Props) {
                 <div 
                   key={status}
                   className={`flex flex-col items-center ${
-                    isActive ? 'text-indigo-600' : 'text-gray-400'
+                    isActive ? 'text-black' : 'text-gray-400'
                   }`}
                 >
                   <div 
                     className={`w-10 h-10 rounded-full flex items-center justify-center
-                             ${isCurrent ? 'ring-2 ring-indigo-600 ring-offset-2' : ''}
-                             ${isActive ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
+                             ${isCurrent ? 'ring-2 ring-black ring-offset-2' : ''}
+                             ${isActive ? 'bg-black text-white' : 'bg-gray-200'}`}
                   >
                     {index === 0 && <Package className="w-5 h-5" />}
                     {index === 1 && <TruckIcon className="w-5 h-5" />}
@@ -312,7 +312,7 @@ export function OrderTracking({ orderId, onBack }: Props) {
             <button
               type="submit"
               disabled={submittingReturn}
-              className="flex-1 py-3 bg-indigo-600 text-white rounded-lg
+              className="flex-1 py-3 bg-black text-white rounded-lg
                        hover:bg-indigo-700 transition-colors disabled:opacity-50"
             >
               {submittingReturn ? 'Submitting...' : 'Submit Return Request'}

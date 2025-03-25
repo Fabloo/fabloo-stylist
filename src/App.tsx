@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate} from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { ArrowRight, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { BodyShapeAnalysis } from './components/BodyShapeAnalysis';
 import { SkinToneAnalysis } from './components/SkinToneAnalysis';
 import { Auth } from './pages/Auth';
@@ -14,7 +14,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { AdminPanel } from './pages/AdminPanel';
 import type { BodyShape, UserProfile, SkinTone } from './types';
 import { getStyleRecommendations } from './utils/styleRecommendations';
-import { supabase } from './lib/supabase';
 
 type RecommendationsPageProps = {
   initialResults: {
@@ -50,7 +49,7 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
         </p>
         <button
           onClick={() => navigate('/body-shape')}
-          className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white
+          className="inline-flex items-center px-6 py-3 bg-black text-white
                    rounded-lg hover:bg-indigo-700 transition-colors"
         >
           Start Analysis
@@ -88,7 +87,7 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
         </p>
         <button
           onClick={() => navigate('/body-shape')}
-          className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white
+          className="inline-flex items-center px-6 py-3 bg-black text-white
                    rounded-lg hover:bg-indigo-700 transition-colors"
         >
           Start Analysis
@@ -110,7 +109,7 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
             </div>
             <button
               onClick={() => setIsAuthenticated(true)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700
+              className="px-4 py-2 bg-black text-white rounded-lg hover:bg-indigo-700
                        transition-colors text-sm font-medium"
             >
               Sign In
@@ -214,18 +213,25 @@ function LandingPage() {
   };
 
   return (
-    <div className="max-w-4xl space-y-8 mx-auto flex flex-col items-center px-4 pb-24 pt-6 relative">{/* Text Content */}
-        <div className="text-center space-y-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Shades That Shine on You
-          </h1>
-          <p className="text-lg text-gray-600">
-            Discover the hues that enhance your glow effortlessly.
-          </p>
-        </div>
-      <div className="w-full max-w-lg">
-        {/* Color Wheel Section */}
-<div className="relative aspect-square mb-12 w-48 mx-auto">
+    <div className="w-full space-y-8  flex flex-col items-start pb-24 relative bg-purple-50">
+
+      <div className="w-full">
+          <img 
+            src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742925824/Frame_1000003885_beeerj.svg"
+            alt="Fabloo app screenshot"
+            className="w-full"
+          />
+          
+         
+      </div>
+
+      <div className="w-full text-center px-4">
+        <h3 className="text-xl font-bold text-gray-900 mb-6">Discover fashion with</h3>
+        <div className="grid grid-cols-2 gap-4">
+          {/* Color Palette Feature */}
+          <div className="bg-white p-4 rounded-xl shadow-sm">
+            <div className="flex justify-center mb-2">
+            <div className="relative aspect-square w-28 mx-auto">
   {/* Color Wheel (SVG) */}
   <svg viewBox="0 0 100 100" className="w-full h-full">
     <path d="M 50,50 L 100,50 A 50,50 0 0,1 93.3,75 Z" fill="#2563eb" /> {/* blue-600 */}
@@ -242,7 +248,6 @@ function LandingPage() {
     <path d="M 50,50 L 93.3,25 A 50,50 0 0,1 100,50 Z" fill="#f9a8d4" /> {/* pink-200 */}
   </svg>
 
-  {/* Single Centered Image */}
   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
     <img
       src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742234094/Frame_1000003729_yhgkns.png" // Replace with actual image
@@ -251,51 +256,39 @@ function LandingPage() {
     />
   </div>
 </div>
-
-
-        {/* Body Shapes */}
-        <div className="mt-16 space-y-6">
-          <h2 className="text-3xl font-bold text-center text-gray-900">
-            Confidence Starts with the Right Fit
-          </h2>
-          <p className="text-lg text-center text-gray-600">
-            Unlock the styles that truly belong in your wardrobe.
-          </p>
+            </div>
+            <p className="text-gray-800 text-sm font-medium">Shades That Shine On You</p>
+          </div>
           
-          <div className="grid grid-cols-5 gap-4 mt-8">
-            {[
-              "https://res.cloudinary.com/drvhoqgno/image/upload/v1742233420/Screenshot_2025-03-17_at_11.13.34_PM_uk7uuz.png", // A-line dress
-              "https://res.cloudinary.com/drvhoqgno/image/upload/v1742233359/Screenshot_2025-03-17_at_11.12.34_PM_k8vyxe.png", // Wrap dress
-              "https://res.cloudinary.com/drvhoqgno/image/upload/v1742233389/Screenshot_2025-03-17_at_11.13.04_PM_mxk2zf.png", // Sheath dress
-              "https://res.cloudinary.com/drvhoqgno/image/upload/v1742233376/Screenshot_2025-03-17_at_11.12.51_PM_q9sspx.png", // Off-shoulder dress
-              "https://res.cloudinary.com/drvhoqgno/image/upload/v1742233335/Screenshot_2025-03-17_at_11.12.07_PM_ogyx46.png" // V-neck dress with collar
-            ].map((imageUrl, index) => (
-              <div key={index} className="flex justify-center">
-                <img
-                  src={imageUrl}
-                  alt={`Dress silhouette ${index + 1}`}
-                  className="w-16 h-48 object-contain opacity-90"
-                />
+          {/* Body Shape Feature */}
+          <div className="bg-white p-4 rounded-xl shadow-sm">
+            <div className="flex justify-center mb-2">
+              <div className="flex space-x-1">
+                {[1, 2, 3].map(index => (
+                  <img
+                    key={index}
+                    src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742233389/Screenshot_2025-03-17_at_11.13.04_PM_mxk2zf.png"
+                    alt={`Dress silhouette ${index}`}
+                    className="w-8 h-28 object-contain"
+                  />
+                ))}
               </div>
-            ))}
+            </div>
+            <p className="text-gray-800 text-sm font-medium">Styles That Flatters On You</p>
           </div>
         </div>
       </div>
       
-      {/* Sticky CTA Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white bg-opacity-95 backdrop-blur-sm 
-                    border-t border-gray-200 shadow-lg z-50">
-        <div className="max-w-4xl mx-auto">
-          <button
-            onClick={startAnalysis}
-            className="w-full flex items-center justify-center gap-2 px-6 py-4 
-                     bg-gray-900 text-white text-lg font-medium rounded-full 
-                     hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
-          >
-            Take a quick scan
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
+      {/* CTA Button */}
+      <div className="w-full mt-6 px-4">
+        <button
+          onClick={startAnalysis}
+          className="w-full flex items-center justify-center gap-2 px-6 py-4 
+                   bg-gray-900 text-white text-lg font-medium rounded-xl
+                   hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
+        >
+          Get Started
+        </button>
       </div>
     </div>
   );
@@ -322,7 +315,7 @@ function App() {
           path="/body-shape"
           element={
             <BodyShapeAnalysis 
-              onComplete={handleBodyShapeComplete}
+              onComplete={handleBodyShapeComplete} 
               currentShape={analysisResults.bodyShape}
             />
           }

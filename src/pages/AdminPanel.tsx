@@ -490,7 +490,7 @@ export function AdminPanel() {
   if (authChecking) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black" />
       </div>
     );
   }
@@ -531,7 +531,7 @@ export function AdminPanel() {
               onClick={() => setActiveTab('orders')}
               className={`px-6 py-3 text-sm font-medium border-b-2 ${
                 activeTab === 'orders'
-                  ? 'border-indigo-500 text-indigo-600'
+                  ? 'border-indigo-500 text-black'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -541,7 +541,7 @@ export function AdminPanel() {
               onClick={() => setActiveTab('returns')}
               className={`px-6 py-3 text-sm font-medium border-b-2 ${
                 activeTab === 'returns'
-                  ? 'border-indigo-500 text-indigo-600'
+                  ? 'border-indigo-500 text-black'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -551,7 +551,7 @@ export function AdminPanel() {
               onClick={() => setActiveTab('inventory')}
               className={`px-6 py-3 text-sm font-medium border-b-2 ${
                 activeTab === 'inventory'
-                  ? 'border-indigo-500 text-indigo-600'
+                  ? 'border-indigo-500 text-black'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -604,7 +604,7 @@ export function AdminPanel() {
                       setShowInventoryForm(true);
                       setEditingItem(null);
                     }}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
+                    className="px-4 py-2 bg-black text-white rounded-lg"
                   >
                     Add Item
                   </button>
@@ -677,7 +677,7 @@ export function AdminPanel() {
 
           {loading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto" />
             </div>
           ) : activeTab === 'orders' ? (
             <div className="space-y-4">
@@ -887,7 +887,7 @@ export function AdminPanel() {
                         </button>
                         <button
                           type="submit"
-                          className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
+                          className="px-4 py-2 bg-black text-white rounded-lg"
                         >
                           {editingItem ? 'Update' : 'Add'} Item
                         </button>

@@ -184,7 +184,7 @@ export function ProductDetail({ id, onClose }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black" />
       </div>
     );
   }
@@ -195,7 +195,7 @@ export function ProductDetail({ id, onClose }: Props) {
         <p className="text-red-600">{error || 'Product not found'}</p>
         <button
           onClick={onClose}
-          className="mt-4 text-indigo-600 hover:text-indigo-700"
+          className="mt-4 text-black hover:text-indigo-700"
         >
           Go back
         </button>
@@ -234,7 +234,7 @@ export function ProductDetail({ id, onClose }: Props) {
               <p className="text-gray-600">{product.description}</p>
             </div>
 
-            <div>
+            {/* <div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">Perfect For</h3>
               <div className="flex flex-wrap gap-2">
                 {product.item_attributes?.body_shapes?.map((shape: string) => (
@@ -246,9 +246,9 @@ export function ProductDetail({ id, onClose }: Props) {
                   </span>
                 ))}
               </div>
-            </div>
+            </div> */}
 
-            <div>
+            {/* <div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">Color Tones</h3>
               <div className="flex flex-wrap gap-2">
                 {product.item_attributes?.color_tones?.map((tone: string) => (
@@ -260,14 +260,14 @@ export function ProductDetail({ id, onClose }: Props) {
                   </span>
                 ))}
               </div>
-            </div>
+            </div> */}
 
             <div className="pt-6 space-y-4">
               <button
                 onClick={() => addToCart(id)}
                 disabled={addingToCart || product.stock <= 0}
                 className="w-full flex items-center justify-center gap-2 py-3 px-8
-                         bg-indigo-600 text-white rounded-full font-medium
+                         bg-black text-white rounded-full font-medium
                          hover:bg-indigo-700 transition-colors disabled:opacity-50
                          disabled:cursor-not-allowed"
               >
@@ -276,7 +276,7 @@ export function ProductDetail({ id, onClose }: Props) {
                  cartSuccess === id ? 'Added to Cart!' : 'Add to Cart'}
               </button>
 
-              <button
+              {/* <button
                 onClick={() => addToWishlist(id)}
                 disabled={addingToWishlist}
                 className="w-full flex items-center justify-center gap-2 py-3 px-8
@@ -285,7 +285,7 @@ export function ProductDetail({ id, onClose }: Props) {
               >
                 <Heart className="w-5 h-5" />
                 {wishlistSuccess === id ? 'Added to Wishlist!' : 'Add to Wishlist'}
-              </button>
+              </button> */}
 
               {error && (
                 <p className="text-red-600 text-sm text-center">{error}</p>

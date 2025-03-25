@@ -9,7 +9,7 @@ type Props = {
 };
 
 export function Auth({ onSuccess }: Props) {
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+91');
   const [otp, setOtp] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -85,7 +85,7 @@ export function Auth({ onSuccess }: Props) {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-sm">
+    <div className="max-w-md mx-auto h-full bg-white p-8 rounded-xl shadow-sm">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">
           {showOtpInput ? 'Enter Verification Code' : 'Sign In with Phone'}
@@ -110,7 +110,8 @@ export function Auth({ onSuccess }: Props) {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="+1234567890"
+                placeholder="+91 XXXXX XXXXX"
+                maxLength={13}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 required
               />
@@ -141,7 +142,7 @@ export function Auth({ onSuccess }: Props) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-lg
+          className="w-full flex items-center justify-center gap-2 py-3 bg-black text-white rounded-lg
                    hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
