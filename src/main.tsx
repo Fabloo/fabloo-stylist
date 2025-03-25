@@ -13,4 +13,4 @@ createRoot(document.getElementById('root')!).render(
 );
 
 
-updateUserRole();
+updateUserRole('ead1cfcf-da3a-407a-b103-33f714994d97', 'admin');

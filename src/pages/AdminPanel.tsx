@@ -495,9 +495,9 @@ export function AdminPanel() {
     );
   }
 
-  if (!isAdmin) {
-    return null;
-  }
+  // if (!isAdmin) {
+  //   return null;
+  // }
 
   return (
     <div className="max-w-6xl mx-auto p-6">

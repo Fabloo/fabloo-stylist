@@ -6,12 +6,12 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 )
 
-export async function updateUserRole() {
+export async function updateUserRole(userId: string, newRole: string) {
   const { data, error } = await supabase.auth.admin.updateUserById(
-    'ead1cfcf-da3a-407a-b103-33f714994d97',
+    userId,
     {
-      app_metadata: {
-        role: 'admin',
+      user_metadata: {
+        role: newRole,
       },
     }
   )
