@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Phone, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../store';
 
 type Props = {
   onSuccess: () => void;
@@ -51,7 +52,10 @@ export function Auth({ onSuccess }: Props) {
         throw new Error('Verification failed. Please try again.');
       }
 
-      // Create profile for new users
+      // Set the user in the auth store
+      useAuthStore.getState().setUser(user);
+
+      // Create/update profile
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert([{ id: user.id }], { onConflict: 'id' });

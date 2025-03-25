@@ -356,10 +356,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
         {dresses.slice(0, visibleCount).map((dress) => (
           <div
             key={dress.id}
-            className="group relative bg-white cursor-pointer rounded-lg overflow-hidden
+            className="group relative bg-white rounded-lg overflow-hidden
                        hover:shadow-lg transition-shadow duration-200 flex flex-col"
-            onClick={() => setSelectedProduct(dress.id)}
           >
+            {/* Product Image and View Details Button */}
             <div className="aspect-[3/4] overflow-hidden relative">
               <img 
                 src={dress.image_url}
@@ -373,21 +373,25 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                   Only {dress.stock} left
                 </span>
               )}
+              <button
+                onClick={() => setSelectedProduct(dress.id)}
+                className="absolute bottom-2 right-2 bg-white/90 text-gray-800 px-3 py-1.5
+                           text-xs font-medium rounded-lg hover:bg-white transition-colors
+                           shadow-sm"
+              >
+                View Details
+              </button>
             </div>
+            
+            {/* Product Info and Actions */}
             <div className="p-4 flex flex-col flex-grow">
               <h4 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
                 {dress.name}
               </h4>
-              {/* <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                {dress.description}
-              </p> */}
               
               <div className="mt-auto">
                 <div className="flex justify-between items-center mb-3">
                   <p className="text-lg font-semibold text-gray-900">₹{dress.price}</p>
-                  {/* <p className="text-sm text-gray-500">
-                    {dress.stock} in stock
-                  </p> */}
                 </div>
 
                 <div className="mb-4">

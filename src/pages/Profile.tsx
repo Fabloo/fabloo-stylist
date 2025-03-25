@@ -25,7 +25,7 @@ export function Profile() {
   const { isAuthenticated, isLoading } = useAuth('/auth');
   const { profile, updateProfile } = useProfile();
   const { logout } = useAuthStore();
-  
+  console.log("authenticated", isAuthenticated)
   useEffect(() => {
     if (isAuthenticated) {
       fetchOrders();
