@@ -4,6 +4,7 @@ import { Upload, ClipboardList } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { SkinToneDetector } from './SkinToneDetector';
 import type { SkinTone, QuizAnswer, BodyShape } from '../types';
+import { CameraSkinToneAnalysis } from './CameraSkinToneAnalysis';
 
 const SKIN_TONES: SkinTone[] = [
   { id: 'fair-cool', name: 'Fair Cool', hexColor: '#F5D0C5', season: 'cool' },
@@ -29,15 +30,15 @@ const QUIZ_QUESTIONS = [
       { id: 'both', text: 'Mix of both/Hard to tell', undertone: 'neutral' }
     ]
   },
-  {
-    id: 'jewelry',
-    question: 'Which jewelry tone looks best on your skin?',
-    options: [
-      { id: 'silver', text: 'Silver/Platinum', undertone: 'cool' },
-      { id: 'gold', text: 'Gold', undertone: 'warm' },
-      { id: 'both', text: 'Both look equally good', undertone: 'neutral' }
-    ]
-  },
+  // {
+  //   id: 'jewelry',
+  //   question: 'Which jewelry tone looks best on your skin?',
+  //   options: [
+  //     { id: 'silver', text: 'Silver/Platinum', undertone: 'cool' },
+  //     { id: 'gold', text: 'Gold', undertone: 'warm' },
+  //     { id: 'both', text: 'Both look equally good', undertone: 'neutral' }
+  //   ]
+  // },
   {
     id: 'sun',
     question: 'How does your skin react to sun exposure?',
@@ -119,13 +120,13 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
 
   const handleDetectionError = (error: string) => {
     setAnalysisError(true);
-    setError(error);
-    // Automatically switch to quiz mode after error
+    setError("We're having trouble initializing the camera analysis. This could be due to browser compatibility issues or required permissions.");
+    // Re-enable automatic fallback to quiz mode
     setTimeout(() => {
       setMethod('quiz');
       setAnalysisError(false);
       setError(null);
-    }, 2000);
+    }, 3000);
   };
 
   if (isAnalyzing) {
@@ -155,21 +156,26 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
         
         <div className="space-y-6">
           <button
+            onClick={() => {
+              setAnalysisError(false);
+              setError(null);
+              setMethod('camera');
+            }}
+            className="w-full flex items-center justify-center gap-3 p-6 bg-white 
+                     border-2 border-gray-300 text-gray-700 rounded-xl 
+                     hover:border-indigo-500 hover:bg-gray-50 transition-colors"
+          >
+            <Upload className="w-6 h-6" />
+            <span className="text-lg font-medium">Retry Camera Analysis</span>
+          </button>
+
+          <button
             onClick={() => setMethod('quiz')}
             className="w-full flex items-center justify-center gap-3 p-6 bg-indigo-600 
                      text-white rounded-xl hover:bg-indigo-700 transition-colors"
           >
             <ClipboardList className="w-6 h-6" />
             <span className="text-lg font-medium">Take Quiz Instead</span>
-          </button>
-          
-          <button
-            onClick={() => navigate('/recommendations')}
-            className="w-full flex items-center justify-center gap-3 p-6 border-2
-                     border-gray-300 rounded-xl hover:border-indigo-500 hover:bg-gray-50
-                     transition-colors text-gray-700"
-          >
-            <span className="text-lg font-medium">Skip Skin Tone Analysis</span>
           </button>
         </div>
       </div>
@@ -218,7 +224,7 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
             <span className="text-sm font-medium text-white-900">Take Quiz</span>
           </button>
 
-          <button
+          {/* <button
             onClick={() => setMethod('camera')}
             className="flex items-center justify-center gap-3 p-6 border-2
                      border-gray-200 bg-white text-gray-900 rounded-xl 
@@ -226,7 +232,7 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
           >
             <Upload className="w-6 h-6 text-gray-600" />
             <span className="text-sm font-medium text-gray-900">Use Camera</span>
-          </button>
+          </button> */}
 
           {error && (
             <div className="p-4 bg-red-50 text-red-700 rounded-lg">
@@ -248,7 +254,7 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
           Position your face in good lighting for the best results
         </p>
         
-        <SkinToneDetector
+        <CameraSkinToneAnalysis 
           onSkinToneDetected={handleSkinToneDetected}
           onError={handleDetectionError}
         />

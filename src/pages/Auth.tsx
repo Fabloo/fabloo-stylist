@@ -1,80 +1,66 @@
 import React, { useState } from 'react';
-import { AuthError } from '@supabase/supabase-js';
-import { Mail, Lock, UserPlus, LogIn, ArrowLeft } from 'lucide-react';
+import { Phone, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useEffect } from 'react';
 
 type Props = {
   onSuccess: () => void;
 };
 
 export function Auth({ onSuccess }: Props) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
 
-  useEffect(() => {
-    checkExistingSession();
-  }, []);
-
-  const checkExistingSession = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        onSuccess();
-      }
-    } catch (err) {
-      console.error('Session check error:', err);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      const credentials = {
-        email: email.trim(),
-        password: password.trim(),
-      };
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: phone.trim(),
+      });
 
-      let authResponse;
-      if (isSignUp) {
-        authResponse = await supabase.auth.signUp(credentials);
-      } else {
-        authResponse = await supabase.auth.signInWithPassword(credentials);
-      }
+      if (error) throw error;
+      
+      setShowOtpInput(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      const { data: authData, error: authError } = authResponse;
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const { data: { user }, error } = await supabase.auth.verifyOtp({
+        phone: phone.trim(),
+        token: otp.trim(),
+        type: 'sms'
+      });
+
+      if (error) throw error;
       
-      if (authError) {
-        if (authError instanceof AuthError) {
-          if (authError.message === 'Invalid login credentials') {
-            throw new Error('Invalid email or password');
-          }
-        }
-        throw new Error(authError.message);
-      }
-      
-      if (!authData?.user) {
-        throw new Error('No user data received. Please try again.');
+      if (!user) {
+        throw new Error('Verification failed. Please try again.');
       }
 
       // Create profile for new users
-      if (isSignUp) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert([{ id: authData.user.id }], { onConflict: 'id' });
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert([{ id: user.id }], { onConflict: 'id' });
 
-        if (profileError) throw profileError;
-      }
+      if (profileError) throw profileError;
       
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to authenticate');
+      setError(err instanceof Error ? err.message : 'Failed to verify OTP');
     } finally {
       setLoading(false);
     }
@@ -82,51 +68,51 @@ export function Auth({ onSuccess }: Props) {
 
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-sm">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">
-          {isSignUp ? 'Create an Account' : 'Welcome Back'}
+          {showOtpInput ? 'Enter Verification Code' : 'Sign In with Phone'}
         </h2>
+        <p className="text-gray-600 mt-2">
+          {showOtpInput 
+            ? 'We sent you a verification code via SMS'
+            : 'Enter your phone number to receive a verification code'
+          }
+        </p>
       </div>
-      
-      <p className="text-gray-600 mb-8">
-        {isSignUp 
-          ? 'Create an account to start your style journey'
-          : 'Sign in to continue your style journey'
-        }
-      </p>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Email
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-              required
-            />
-          </div>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <form onSubmit={showOtpInput ? handleVerifyOTP : handleSendOTP} className="space-y-6">
+        {!showOtpInput ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Phone Number
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+1234567890"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                required
+              />
+            </div>
+          </div>
+        ) : (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Verification Code
+            </label>
             <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="Enter 6-digit code"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               required
             />
           </div>
-        </div>
+        )}
 
         {error && (
           <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
@@ -142,26 +128,32 @@ export function Auth({ onSuccess }: Props) {
         >
           {loading ? (
             'Please wait...'
-          ) : isSignUp ? (
+          ) : showOtpInput ? (
             <>
-              <UserPlus className="w-5 h-5" />
-              Create Account
+              Verify Code
+              <ArrowRight className="w-5 h-5" />
             </>
           ) : (
             <>
-              <LogIn className="w-5 h-5" />
-              Sign In
+              Send Code
+              <ArrowRight className="w-5 h-5" />
             </>
           )}
         </button>
 
-        <button
-          type="button"
-          onClick={() => setIsSignUp(!isSignUp)}
-          className="w-full text-center text-sm text-gray-600 hover:text-gray-900"
-        >
-          {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
-        </button>
+        {showOtpInput && (
+          <button
+            type="button"
+            onClick={() => {
+              setShowOtpInput(false);
+              setOtp('');
+              setError(null);
+            }}
+            className="w-full text-center text-sm text-gray-600 hover:text-gray-900"
+          >
+            Change Phone Number
+          </button>
+        )}
       </form>
     </div>
   );

@@ -21,6 +21,7 @@ type Order = {
     id: string;
     quantity: number;
     price: number;
+    size_selected: string;
     inventory_items: {
       id: string;
       name: string;
@@ -252,6 +253,7 @@ export function OrderTracking({ orderId, onBack }: Props) {
                   {item.inventory_items.name}
                 </h4>
                 <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                <p className="text-sm text-gray-600">Size: {item.size_selected}</p>
               </div>
               <p className="font-medium text-gray-900">
                 ₹{(item.price * item.quantity).toFixed(2)}

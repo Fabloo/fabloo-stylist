@@ -16,6 +16,16 @@ type Order = {
     email: string;
   };
   user_id: string;
+  items?: {
+    id: string;
+    quantity: number;
+    price: number;
+    inventory_item: {
+      id: string;
+      name: string;
+      image_url: string;
+    };
+  }[];
 };
 
 type Return = {
@@ -198,7 +208,19 @@ export function AdminPanel() {
 
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          items:order_items (
+            id,
+            quantity,
+            price,
+            inventory_item:inventory_items (
+              id,
+              name,
+              image_url
+            )
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -682,6 +704,32 @@ export function AdminPanel() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Display order items */}
+                  {order.items && order.items.length > 0 && (
+                    <div className="mb-4 border-t border-b border-gray-100 py-3">
+                      <h4 className="font-medium text-sm text-gray-700 mb-2">Order Items:</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {order.items.map(item => (
+                          <div key={item.id} className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0">
+                              <img 
+                                src={item.inventory_item.image_url} 
+                                alt={item.inventory_item.name}
+                                className="w-full h-full object-cover" 
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-800 truncate">{item.inventory_item.name}</p>
+                              <p className="text-xs text-gray-500">
+                                Qty: {item.quantity} × ₹{item.price}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-4">
                     <select

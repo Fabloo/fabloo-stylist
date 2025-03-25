@@ -51,10 +51,14 @@ export function SkinToneDetector({ onSkinToneDetected, onError }: Props) {
   }, []);
 
   const extractSkinTone = useCallback((landmarks: { x: number; y: number; z: number }[]) => {
-    if (!canvasRef.current || !videoRef.current) return;
+    if (!canvasRef.current || !videoRef.current) {
+      throw new Error('Canvas or video reference not available');
+    }
 
     const ctx = canvasRef.current.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      throw new Error('Could not get canvas context');
+    }
 
     // Draw frame from video
     ctx.drawImage(
@@ -115,22 +119,47 @@ export function SkinToneDetector({ onSkinToneDetected, onError }: Props) {
 
     const initializeFaceMesh = async () => {
       try {
+        // Create FaceMesh with explicit configuration
         faceMesh = new FaceMesh({
-          locateFile: (file) => 
-            `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
-        });
-
-        await faceMesh.initialize();
-        
-        await faceMesh.setOptions({
+          locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+          },
+          wasmBinary: undefined, // Let MediaPipe handle WASM loading
           maxNumFaces: 1,
-          refineLandmarks: true,
+          refineLandmarks: false,
           minDetectionConfidence: 0.5,
           minTrackingConfidence: 0.5
         });
 
+        // Configure FaceMesh before initialization
+        faceMesh.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: false,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5
+        });
+
+        // Initialize with error handling
+        try {
+          await faceMesh.initialize();
+        } catch (initError) {
+          console.error('FaceMesh initialization error:', initError);
+          throw new Error('Failed to initialize face detection. Please try again or use the quiz instead.');
+        }
+
+        // Rest of the face mesh configuration...
+        let consecutiveFailures = 0;
+        const MAX_FAILURES = 5;
+
         faceMesh.onResults((results) => {
-          if (!results.multiFaceLandmarks?.[0]) return;
+          if (!results.multiFaceLandmarks?.[0]) {
+            consecutiveFailures++;
+            if (consecutiveFailures >= MAX_FAILURES) {
+              onError('No face detected. Please ensure your face is clearly visible.');
+            }
+            return;
+          }
+          consecutiveFailures = 0;
 
           try {
             const skinTone = extractSkinTone(results.multiFaceLandmarks[0]);
@@ -138,37 +167,67 @@ export function SkinToneDetector({ onSkinToneDetected, onError }: Props) {
               onSkinToneDetected(skinTone);
             }
           } catch (err) {
-            onError('Could not determine skin tone from image');
+            onError(err instanceof Error ? err.message : 'Could not determine skin tone from image');
           }
         });
 
-        // Initialize camera
-        camera = new Camera(videoRef.current, {
-          onFrame: async () => {
-            if (videoRef.current) {
-              await faceMesh.send({ image: videoRef.current });
-            }
-          },
-          width: 640,
-          height: 480
-        });
+        // Initialize camera with error handling
+        try {
+          camera = new Camera(videoRef.current, {
+            onFrame: async () => {
+              if (videoRef.current && faceMesh) {
+                try {
+                  await faceMesh.send({ image: videoRef.current });
+                } catch (sendError) {
+                  console.error('Error sending frame to FaceMesh:', sendError);
+                }
+              }
+            },
+            width: 640,
+            height: 480
+          });
 
-        await camera.start();
-        setIsInitializing(false);
+          await camera.start();
+          setIsInitializing(false);
+        } catch (cameraError) {
+          console.error('Camera initialization error:', cameraError);
+          throw new Error('Camera access denied. Please check your camera permissions and try again.');
+        }
+
       } catch (err) {
-        console.error('Camera initialization error:', err);
+        console.error('Setup error:', err);
         setHasCameraError(true);
-        onError('Oops! We are not able to access the camera. Instead, please answer these questions.');
+        onError(err instanceof Error ? err.message : 'Failed to initialize camera system.');
       }
     };
 
-    initializeFaceMesh();
+    // Add a small delay before initialization to ensure DOM is ready
+    const initTimeout = setTimeout(() => {
+      initializeFaceMesh().catch((err) => {
+        console.error('Delayed initialization error:', err);
+        setHasCameraError(true);
+        onError('Failed to initialize camera system. Please try the quiz instead.');
+      });
+    }, 100);
 
     return () => {
+      clearTimeout(initTimeout);
       faceMesh?.close();
       camera?.stop();
     };
   }, [onSkinToneDetected, onError, extractSkinTone]);
+
+  // Add loading state handling
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (isInitializing) {
+        setHasCameraError(true);
+        onError('Camera initialization timed out. Please refresh and try again.');
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeoutId);
+  }, [isInitializing, onError]);
 
   // Automatically switch to quiz mode if camera fails
   useEffect(() => {

@@ -66,95 +66,122 @@ export function Layout({ children }: LayoutProps) {
       </nav>
 
       {isCartOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
-          <div className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-          
-          <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex">
-            <div className="w-screen max-w-md">
-              <div className="h-full flex flex-col bg-white shadow-xl">
-                <div className="flex-1 py-6 overflow-y-auto px-4 sm:px-6">
-                  <div className="flex items-start justify-between">
-                    <h2 className="text-lg font-medium text-gray-900">Shopping Cart</h2>
-                    <button
-                      onClick={() => setIsCartOpen(false)}
-                      className="ml-3 h-7 flex items-center"
-                    >
-                      <X className="h-6 w-6 text-gray-400 hover:text-gray-500" />
-                    </button>
-                  </div>
+  <div className="fixed inset-0 z-50 overflow-hidden">
+    {/* Improved Background Overlay with blur */}
+    <div
+      className="absolute inset-0 bg-gray-800/70 backdrop-blur-sm transition-opacity duration-300"
+      aria-hidden="true"
+      onClick={() => setIsCartOpen(false)}
+    />
 
-                  <div className="mt-8">
-                    {isLoading ? (
-                      <p className="text-center text-gray-500">Loading cart...</p>
-                    ) : error ? (
-                      <p className="text-center text-red-600">{error}</p>
-                    ) : cartItems.length === 0 ? (
-                      <p className="text-center text-gray-500">Your cart is empty</p>
-                    ) : (
-                      <div className="flow-root">
-                        <ul className="-my-6 divide-y divide-gray-200">
-                          {cartItems.map((item) => (
-                            <li key={item.id} className="py-6 flex">
-                              <div className="flex-shrink-0 w-24 h-24 overflow-hidden rounded-md">
-                                <img
-                                  src={item.inventory_items.image_url}
-                                  alt={item.inventory_items.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
+    {/* Enhanced Slide-in Panel */}
+    <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex animate-slide-in">
+      <div className="w-screen max-w-md">
+        <div className="h-full flex flex-col bg-white shadow-2xl">
+          {/* Refined Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-white">
+            <h2 className="text-2xl font-bold text-gray-800">Your Cart</h2>
+            <button
+              onClick={() => setIsCartOpen(false)}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+            >
+              <X className="h-6 w-6 text-gray-600" />
+            </button>
+          </div>
 
-                              <div className="ml-4 flex-1 flex flex-col">
-                                <div>
-                                  <div className="flex justify-between text-base font-medium text-gray-900">
-                                    <h3>{item.inventory_items.name}</h3>
-                                    <p className="ml-4">
-                                     ₹{item.inventory_items.price * item.quantity}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex-1 flex items-end justify-between text-sm">
-                                  <p className="text-gray-500">Qty {item.quantity}</p>
-                                  <button
-                                    onClick={() => removeFromCart(item.id)}
-                                    className="font-medium text-indigo-600 hover:text-indigo-500"
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 py-6 px-4 sm:px-6">
-                  <div className="flex justify-between text-base font-medium text-gray-900">
-                    <p>Subtotal</p>
-                    <p>₹{totalAmount.toFixed(2)}</p>
-                  </div>
-                  <p className="mt-0.5 text-sm text-gray-500">
-                    Shipping and taxes calculated at checkout
-                  </p>
-                  <div className="mt-6">
-                    <button
-                      onClick={handleCheckout}
-                      className="w-full flex justify-center items-center px-6 py-3 border 
-                               border-transparent rounded-md shadow-sm text-base font-medium 
-                               text-white bg-indigo-600 hover:bg-indigo-700"
-                    >
-                      <CreditCard className="w-5 h-5 mr-2" />
-                      Checkout
-                    </button>
-                  </div>
-                </div>
+          {/* Enhanced Cart Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"/>
               </div>
+            ) : error ? (
+              <div className="text-center p-6 bg-red-50 rounded-lg">
+                <p className="text-red-600">{error}</p>
+              </div>
+            ) : cartItems.length === 0 ? (
+              <div className="text-center p-10">
+                <ShoppingBag className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">Your cart is empty</p>
+                <button 
+                  onClick={() => setIsCartOpen(false)}
+                  className="mt-4 text-indigo-600 hover:text-indigo-500"
+                >
+                  Continue Shopping
+                </button>
+              </div>
+            ) : (
+              <ul className="space-y-6">
+                {cartItems.map((item) => (
+                  <li key={item.id} className="flex bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                    {/* Enhanced Product Image */}
+                    <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+                      <img
+                        src={item.inventory_items.image_url}
+                        alt={item.inventory_items.name}
+                        className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-200"
+                      />
+                    </div>
+
+                    {/* Improved Details Layout */}
+                    <div className="ml-4 flex-1 flex flex-col">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-lg font-medium text-gray-900 hover:text-indigo-600 transition-colors duration-200">
+                          {item.inventory_items.name}
+                        </h3>
+                        <p className="text-lg font-semibold text-gray-800">
+                          ₹{(item.inventory_items.price * item.quantity).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="mt-2 flex justify-between items-center">
+                        <div className="flex items-center space-x-4">
+                          <span className="px-2 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
+                            Size: {item.size_selected}
+                          </span>
+                          <span className="px-2 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
+                            Qty: {item.quantity}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors duration-200 flex items-center"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Enhanced Footer */}
+          <div className="border-t border-gray-200 bg-gray-50 p-6">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-xl font-medium text-gray-800">Total</span>
+              <span className="text-xl font-bold text-indigo-600">
+                ₹{totalAmount.toFixed(2)}
+              </span>
             </div>
+            <p className="text-sm text-gray-500 mb-6 flex items-center">
+              <CreditCard className="w-4 h-4 mr-2 text-gray-400" />
+              Shipping and taxes calculated at checkout
+            </p>
+            <button
+              onClick={handleCheckout}
+              className="w-full inline-flex items-center justify-center px-6 py-4 border border-transparent rounded-lg shadow-lg text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Proceed to Checkout
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* Checkout Modal */}
       {isCheckoutOpen && (

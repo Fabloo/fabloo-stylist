@@ -18,6 +18,7 @@ type DressItem = {
   price: number;
   image_url: string;
   stock: number;
+  sizes?: string[];
 };
 
 export function ShopRecommendations({ bodyShape, skinTone }: Props) {
@@ -33,6 +34,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
   const [filterType, setFilterType] = useState<'all' | 'style' | 'color'>('all');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [colorPalette, setColorPalette] = useState<any>(null);
+  const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     checkSession();
@@ -58,11 +60,15 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
         throw new Error('Please sign in to continue');
       }
 
-      setAddingToCart(itemId);
+      if (!selectedSizes[itemId]) {
+        setError('Please select a size');
+        return;
+      }
+
       setError(null);
+      setAddingToCart(itemId);
       setCartSuccess(null);
 
-      // Get the current user's ID from the session
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
 
@@ -70,11 +76,15 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
         throw new Error('User not found');
       }
 
-      // Insert into cart table with proper conflict handling
       const { error } = await supabase
         .from('cart_items')
         .upsert(
-          { user_id: userId, item_id: itemId, quantity: 1 },
+          { 
+            user_id: userId, 
+            item_id: itemId, 
+            quantity: 1,
+            size_selected: selectedSizes[itemId]
+          },
           { onConflict: 'user_id,item_id' }
         );
 
@@ -84,6 +94,11 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
       await fetchCart();
       setTimeout(() => {
         setCartSuccess(null);
+        setSelectedSizes(prev => {
+          const newSizes = { ...prev };
+          delete newSizes[itemId];
+          return newSizes;
+        });
       }, 1000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to add item to cart';
@@ -342,7 +357,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
           <div
             key={dress.id}
             className="group relative bg-white cursor-pointer rounded-lg overflow-hidden
-                       hover:shadow-lg transition-shadow duration-200"
+                       hover:shadow-lg transition-shadow duration-200 flex flex-col"
             onClick={() => setSelectedProduct(dress.id)}
           >
             <div className="aspect-[3/4] overflow-hidden relative">
@@ -359,39 +374,84 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                 </span>
               )}
             </div>
-            <div className="p-4">
+            <div className="p-4 flex flex-col flex-grow">
               <h4 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
                 {dress.name}
               </h4>
-              <p className="text-sm text-gray-600 mb-3">
-                {dress.description.slice(0, 50)}...
-              </p>
-              <p className="text-sm font-medium text-gray-900 mb-3">₹{dress.price}</p>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addToCart(dress.id);
-                }}
-                disabled={addingToCart === dress.id || !isAuthenticated}
-                className="w-full py-2 bg-indigo-600 text-white text-sm font-medium
+              {/* <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                {dress.description}
+              </p> */}
+              
+              <div className="mt-auto">
+                <div className="flex justify-between items-center mb-3">
+                  <p className="text-lg font-semibold text-gray-900">₹{dress.price}</p>
+                  <p className="text-sm text-gray-500">
+                    {dress.stock} in stock
+                  </p>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-xs font-medium text-gray-600 mb-2">Select Size:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {
+                      (typeof dress.sizes === 'string' ? JSON.parse(dress.sizes) : dress.sizes)?.map((size: string) => (
+                        <button
+                          key={size}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedSizes(prev => ({
+                              ...prev,
+                              [dress.id]: size
+                            }));
+                          }}
+                          className={`px-3 py-1 text-xs font-medium border rounded-full
+                                   transition-colors focus:outline-none focus:ring-2 
+                                   focus:ring-indigo-500 focus:ring-offset-1
+                                   ${selectedSizes[dress.id] === size 
+                                     ? 'bg-indigo-600 text-white border-indigo-600' 
+                                     : 'border-gray-200 text-gray-600 hover:border-indigo-500 hover:text-indigo-500'
+                                   }`}
+                        >
+                          {size}
+                        </button>
+                      ))
+                    }
+                  </div>
+                  {error && !selectedSizes[dress.id] && (
+                    <p className="text-xs text-red-500 mt-1">Please select a size</p>
+                  )}
+                </div>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!selectedSizes[dress.id]) {
+                      setError('Please select a size');
+                      return;
+                    }
+                    addToCart(dress.id);
+                  }}
+                  disabled={addingToCart === dress.id || !isAuthenticated || !selectedSizes[dress.id]}
+                  className={`w-full py-2.5 ${!selectedSizes[dress.id] ? 'bg-indigo-300' : 'bg-indigo-600'} text-white text-sm font-medium
                            rounded-lg hover:bg-indigo-700 transition-colors duration-200
                            disabled:opacity-50 disabled:cursor-not-allowed flex items-center
-                           justify-center gap-2"
-              >
-                {addingToCart === dress.id ? (
-                  'Adding...'
-                ) : cartSuccess === dress.id ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Added!
-                  </>
-                ) : (
-                  <>
-                    <ShoppingBag className="w-4 h-4" />
-                    {isAuthenticated ? 'Add to Cart' : 'Sign in to Add'}
-                  </>
-                )}
-              </button>
+                           justify-center gap-2 shadow-sm`}
+                >
+                  {addingToCart === dress.id ? (
+                    'Adding...'
+                  ) : cartSuccess === dress.id ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Added!
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag className="w-4 h-4" />
+                      {isAuthenticated ? 'Add to Cart' : 'Sign in to Add'}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         ))}
