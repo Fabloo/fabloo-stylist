@@ -385,37 +385,58 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
               <div className="mt-auto">
                 <div className="flex justify-between items-center mb-3">
                   <p className="text-lg font-semibold text-gray-900">₹{dress.price}</p>
-                  <p className="text-sm text-gray-500">
+                  {/* <p className="text-sm text-gray-500">
                     {dress.stock} in stock
-                  </p>
+                  </p> */}
                 </div>
 
                 <div className="mb-4">
                   <p className="text-xs font-medium text-gray-600 mb-2">Select Size:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {
-                      (typeof dress.sizes === 'string' ? JSON.parse(dress.sizes) : dress.sizes)?.map((size: string) => (
-                        <button
-                          key={size}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedSizes(prev => ({
-                              ...prev,
-                              [dress.id]: size
-                            }));
-                          }}
-                          className={`px-3 py-1 text-xs font-medium border rounded-full
-                                   transition-colors focus:outline-none focus:ring-2 
-                                   focus:ring-indigo-500 focus:ring-offset-1
-                                   ${selectedSizes[dress.id] === size 
-                                     ? 'bg-indigo-600 text-white border-indigo-600' 
-                                     : 'border-gray-200 text-gray-600 hover:border-indigo-500 hover:text-indigo-500'
-                                   }`}
-                        >
+                  {/* Mobile Dropdown */}
+                  <div className="md:hidden">
+                    <select
+                      value={selectedSizes[dress.id] || ''}
+                      onChange={(e) => {
+                        setSelectedSizes(prev => ({
+                          ...prev,
+                          [dress.id]: e.target.value
+                        }));
+                      }}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select a size</option>
+                      {(typeof dress.sizes === 'string' ? JSON.parse(dress.sizes) : dress.sizes)?.map((size: string) => (
+                        <option key={size} value={size}>
                           {size}
-                        </button>
-                      ))
-                    }
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* Desktop Buttons */}
+                  <div className="hidden md:flex flex-wrap gap-2">
+                    {(typeof dress.sizes === 'string' ? JSON.parse(dress.sizes) : dress.sizes)?.map((size: string) => (
+                      <button
+                        key={size}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedSizes(prev => ({
+                            ...prev,
+                            [dress.id]: size
+                          }));
+                        }}
+                        className={`px-3 py-1 text-xs font-medium border rounded-full
+                                 transition-colors focus:outline-none focus:ring-2 
+                                 focus:ring-indigo-500 focus:ring-offset-1
+                                 ${selectedSizes[dress.id] === size 
+                                   ? 'bg-indigo-600 text-white border-indigo-600' 
+                                   : 'border-gray-200 text-gray-600 hover:border-indigo-500 hover:text-indigo-500'
+                                 }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
                   </div>
                   {error && !selectedSizes[dress.id] && (
                     <p className="text-xs text-red-500 mt-1">Please select a size</p>
