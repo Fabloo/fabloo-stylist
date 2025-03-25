@@ -6,6 +6,8 @@ export function useAuth(redirectTo?: string) {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
 
+  console.log('isAuthenticated', isAuthenticated);
+
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Phone, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import { useAuth } from '../hooks/useAuth';
 
 type Props = {
   onSuccess: () => void;
@@ -13,6 +14,17 @@ export function Auth({ onSuccess }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
+
+
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      onSuccess();
+    }
+  }, [isAuthenticated, onSuccess]);
+
+
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,12 +57,14 @@ export function Auth({ onSuccess }: Props) {
         token: otp.trim(),
         type: 'sms'
       });
-
+     
       if (error) throw error;
       
       if (!user) {
         throw new Error('Verification failed. Please try again.');
       }
+
+      console.log('User:', user);
 
       // Set the user in the auth store
       useAuthStore.getState().setUser(user);
