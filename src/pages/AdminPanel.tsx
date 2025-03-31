@@ -417,30 +417,52 @@ export function AdminPanel() {
         items.push(item);
       }
 
-      // Insert items into database
+      // Insert or update items in the database
       for (const item of items) {
         const { body_shapes, color_tones, dress_type, ...inventoryItem } = item;
-        
-        // Insert inventory item
-        const { data: newItem, error: itemError } = await supabase
+
+        // Check if the item already exists
+        const { data: existingItem, error: fetchError } = await supabase
           .from('inventory_items')
-          .insert([inventoryItem])
-          .select()
+          .select('id')
+          .eq('name', inventoryItem.name)
           .single();
 
-        if (itemError) throw itemError;
+        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116: No rows found
+          throw fetchError;
+        }
 
-        // Insert item attributes
-        const { error: attrError } = await supabase
-          .from('item_attributes')
-          .insert([{
-            item_id: newItem.id,
-            body_shapes,
-            color_tones,
-            dress_type
-          }]);
+        if (existingItem) {
+          // Update existing item
+          const { error: itemError } = await supabase
+            .from('inventory_items')
+            .update(inventoryItem)
+            .eq('id', existingItem.id);
 
-        if (attrError) throw attrError;
+          if (itemError) throw itemError;
+
+          const { error: attrError } = await supabase
+            .from('item_attributes')
+            .update({ body_shapes, color_tones, dress_type })
+            .eq('item_id', existingItem.id);
+
+          if (attrError) throw attrError;
+        } else {
+          // Insert new item
+          const { data: newItem, error: itemError } = await supabase
+            .from('inventory_items')
+            .insert([inventoryItem])
+            .select()
+            .single();
+
+          if (itemError) throw itemError;
+
+          const { error: attrError } = await supabase
+            .from('item_attributes')
+            .insert([{ item_id: newItem.id, body_shapes, color_tones, dress_type }]);
+
+          if (attrError) throw attrError;
+        }
       }
 
       setUploadSuccess(`Successfully imported ${items.length} items`);

@@ -40,6 +40,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement | null>(null);
 
+
   useEffect(() => {
     checkSession();
     const recommendations = getStyleRecommendations(bodyShape, skinTone);
@@ -143,8 +144,8 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
             const attributes = item.item_attributes[0];
             if (!attributes || !attributes.body_shapes) return false;
             
-            // Split the combined string into an array, trim whitespace, and convert to lowercase
-            const bodyShapes = attributes.body_shapes[0].split(',').map((shape: string) => shape.trim().toLowerCase());
+            // Directly use the array for comparison
+            const bodyShapes = attributes.body_shapes.map((shape: string) => shape.toLowerCase());
             return bodyShapes.includes(bodyShape.toLowerCase());
           });
         } else if (filterType === 'color') {
@@ -153,8 +154,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
             const attributes = item.item_attributes[0];
             if (!attributes || !attributes.color_tones) return false;
             
-            // Split the combined string into an array, trim whitespace, and convert to lowercase
-            const colorTones = attributes.color_tones[0].split(';').map((tone: string) => tone.trim().toLowerCase());
+            const colorTones = attributes.color_tones.map((tone: string) => tone.toLowerCase());
             return colorTones.includes(skinTone.season.toLowerCase());
           });
         } else {
@@ -164,12 +164,17 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
             const attributes = item.item_attributes[0];
             if (!attributes || !attributes.body_shapes || !attributes.color_tones) return false;
             
-            const bodyShapes = attributes.body_shapes[0].split(',').map((shape: string) => shape.trim().toLowerCase());
-            const colorTones = attributes.color_tones[0].split(',').map((tone: string) => tone.trim().toLowerCase());
-            return bodyShapes.includes(bodyShape.toLowerCase()) && colorTones.includes(skinTone.season.toLowerCase());
+            const bodyShapes = attributes.body_shapes.map((shape: string) => shape.toLowerCase());
+            const colorTones = attributes.color_tones.map((tone: string) => tone.toLowerCase());
+            
+            return bodyShapes.includes(bodyShape.toLowerCase()) || 
+                   colorTones.includes(skinTone.season.toLowerCase());
           });
         }
-        console.log(filteredDresses);
+
+        // Add debug logging
+        console.log('Body Shape Search:', bodyShape);
+        console.log('Filtered Dresses:', filteredDresses);
 
         setDresses(filteredDresses);
       } catch (err) {
@@ -182,7 +187,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
     }
 
     fetchRecommendations();
-  }, [bodyShape, skinTone]);
+  }, [bodyShape, skinTone, filterType]);
 
   const loadMoreItems = useCallback(() => {
     setVisibleCount(prev => prev + 8);
@@ -228,8 +233,6 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
       </div>
     );
   }
-
-   console.log(dresses);
 
   return (
     <div className="bg-white w-full h-full relative overflow-hidden">
