@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { CreditCard, Truck, MapPin, Phone, Mail, User, HashIcon as CashIcon } from 'lucide-react';
+import { useCart } from '../hooks/useCart';
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -97,6 +98,7 @@ export function Checkout({ onSuccess }: Props) {
     email: ''
   });
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('address');
+  const { clearCart: clearCartStore } = useCart();
 
   useEffect(() => {
     fetchCartItems();
@@ -282,7 +284,7 @@ export function Checkout({ onSuccess }: Props) {
 
       if (statusError) throw statusError;
 
-      // Clear cart
+      // Update the cart clearing logic
       const { error: clearCartError } = await supabase
         .from('cart_items')
         .delete()
@@ -290,6 +292,10 @@ export function Checkout({ onSuccess }: Props) {
         .in('id', cartItems.map(item => item.id));
 
       if (clearCartError) throw clearCartError;
+
+      // Add these lines to clear the cart in the store
+      clearCartStore();
+      setCartItems([]);
 
       // Refresh cart items after successful order
       await fetchCartItems();
