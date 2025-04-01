@@ -168,49 +168,48 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
 
   if (!method) {
     return (
-      <div className="max-w-2xl mx-auto text-center mt-10">
-        
-
+      <div className="max-w-2xl mx-auto text-center mt-10 pb-32">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">Body Shape Analysis</h2>
         <p className="text-lg text-gray-600 mb-8">
           Let's start by analyzing your body shape. Choose your preferred method.
         </p>
-{/* Add Image Above Method Selection */}
+        {/* Add Image Above Method Selection */}
         <img
           src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742291530/Frame_1000003512_kf4boz.png"
           alt="Body Shape Analysis Guide"
           className="w-64 mx-auto mb-8"
         />
-        <div className="flex flex-col gap-4 max-w-sm mx-auto mb-8">
 
+        {error && (
+          <div className="p-4 bg-red-50 text-red-700 rounded-lg mb-8">
+            {error}
+          </div>
+        )}
 
-          <label className="flex items-center justify-center gap-3 p-6 bg-gray-900
-                     text-white rounded-xl hover:bg-gray-800 transition-colors cursor-pointer"
-          >
-            <Upload className="w-6 h-6" />
-            <span className="text-lg font-medium">Upload Photo</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </label>
-
-          <button
-            onClick={() => setMethod('quiz')}
-            className="flex items-center justify-center gap-3 p-6 border-2 border-secondary 
-                     text-secondary rounded-xl hover:bg-secondary/20 transition-colors"
-          >
-            <ClipboardList className="w-6 h-6" />
-            <span className="text-lg font-medium">Take Quiz</span>
-          </button>
-
-          {error && (
-            <div className="p-4 bg-red-50 text-red-700 rounded-lg">
-              {error}
-            </div>
-          )}
+        {/* Sticky Footer Buttons */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
+          <div className="w-[312px] mx-auto space-y-3">
+            <button
+              onClick={() => setMethod('quiz')}
+              className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow"
+            >
+              Take Quiz
+            </button>
+            <label className="block">
+              <div className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2 cursor-pointer">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6.66667 6.66667V5C6.66667 3.15905 8.15905 1.66667 10 1.66667C11.841 1.66667 13.3333 3.15905 13.3333 5V6.66667M10 11.6667V13.3333M5 18.3333H15C16.3807 18.3333 17.5 17.214 17.5 15.8333V9.16667C17.5 7.78595 16.3807 6.66667 15 6.66667H5C3.61929 6.66667 2.5 7.78595 2.5 9.16667V15.8333C2.5 17.214 3.61929 18.3333 5 18.3333Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Upload Photo
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </label>
+          </div>
         </div>
       </div>
     );

@@ -14,6 +14,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { AdminPanel } from './pages/AdminPanel';
 import type { BodyShape, UserProfile, SkinTone } from './types';
 import { getStyleRecommendations } from './utils/styleRecommendations';
+import { GoogleTagManager } from './components/GoogleTagManager';
 
 type RecommendationsPageProps = {
   initialResults: {
@@ -136,15 +137,23 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 flex items-center justify-center">
                         <img 
-                          src={`/images/body-shapes/${profile.bodyShape?.toLowerCase()}-icon.svg`}
+                          src={
+                            profile.bodyShape ? 
+                              profile.bodyShape.toLowerCase() === 'rectangle' 
+                                ? 'https://res.cloudinary.com/drvhoqgno/image/upload/v1743358211/Screenshot_2025-03-30_at_11.40.04_PM_opafaj.png'
+                              : profile.bodyShape.toLowerCase() === 'apple'
+                                ? 'https://res.cloudinary.com/drvhoqgno/image/upload/v1743358070/Screenshot_2025-03-30_at_11.37.41_PM_a7y4ci.png'
+                              : profile.bodyShape.toLowerCase() === 'pear'
+                                ? 'https://res.cloudinary.com/drvhoqgno/image/upload/v1743357962/Screenshot_2025-03-30_at_11.35.54_PM_fbz2o2.png'
+                              : profile.bodyShape.toLowerCase() === 'hourglass'
+                                ? 'https://res.cloudinary.com/drvhoqgno/image/upload/v1743358165/Screenshot_2025-03-30_at_11.39.17_PM_bkawge.png'
+                              : profile.bodyShape.toLowerCase() === 'inverted-triangle'
+                                ? 'https://res.cloudinary.com/drvhoqgno/image/upload/v1743358120/Screenshot_2025-03-30_at_11.38.33_PM_ptsriy.png'
+                                : ''
+                            : ''
+                          }
                           alt={profile.bodyShape || 'Body shape'}
                           className="w-full h-full object-contain"
-                          onError={(e) => {
-                            const target = e.currentTarget;
-                            if (profile.bodyShape) {
-                              target.src = `https://res.cloudinary.com/drvhoqgno/image/upload/v1742970214/body-shapes/${profile.bodyShape.toLowerCase()}-icon.svg`;
-                            }
-                          }}
                         />
                       </div>
                       <p className="text-[#212121] text-xl font-semibold leading-[25.2px] font-poppins capitalize">
@@ -265,72 +274,70 @@ function LandingPage() {
       </div>
 
       {/* Features Section */}
-      <div className="w-full text-center px-4 max-w-4xl mx-auto">
-        <h3 className="text-2xl font-bold text-gray-900 mb-8">Discover fashion with</h3>
-        <div className="grid grid-cols-2 gap-6">
-          {/* Color Palette Feature */}
-          <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex justify-center mb-4">
-              <div className="relative aspect-square w-32 mx-auto">
-                <svg viewBox="0 0 100 100" className="w-full h-full animate-spin-slow">
-                  <path d="M 50,50 L 100,50 A 50,50 0 0,1 93.3,75 Z" fill="#2563eb" />
-                  <path d="M 50,50 L 93.3,75 A 50,50 0 0,1 75,93.3 Z" fill="#581c87" />
-                  <path d="M 50,50 L 75,93.3 A 50,50 0 0,1 50,100 Z" fill="#5eead4" />
-                  <path d="M 50,50 L 50,100 A 50,50 0 0,1 25,93.3 Z" fill="#e11d48" />
-                  <path d="M 50,50 L 25,93.3 A 50,50 0 0,1 6.7,75 Z" fill="#7dd3fc" />
-                  <path d="M 50,50 L 6.7,75 A 50,50 0 0,1 0,50 Z" fill="#fef08a" />
-                  <path d="M 50,50 L 0,50 A 50,50 0 0,1 6.7,25 Z" fill="#f9a8d4" />
-                  <path d="M 50,50 L 6.7,25 A 50,50 0 0,1 25,6.7 Z" fill="#e5e7eb" />
-                  <path d="M 50,50 L 25,6.7 A 50,50 0 0,1 50,0 Z" fill="#60a5fa" />
-                  <path d="M 50,50 L 50,0 A 50,50 0 0,1 75,6.7 Z" fill="#86efac" />
-                  <path d="M 50,50 L 75,6.7 A 50,50 0 0,1 93.3,25 Z" fill="#c4b5fd" />
-                  <path d="M 50,50 L 93.3,25 A 50,50 0 0,1 100,50 Z" fill="#f9a8d4" />
-                </svg>
+      <div className="w-[312px] mx-auto mt-[22px] space-y-4 pb-24">
+        <div className="text-center text-[#212121] text-[20px] font-semibold leading-[24px] font-poppins mb-6">
+          Discover fashion with
+        </div>
 
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <img
-                    src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742234094/Frame_1000003729_yhgkns.png"
-                    alt="Center Image"
-                    className="w-20 h-20 rounded-full border-4 border-white shadow-xl object-cover transform hover:scale-110 transition-transform duration-300"
-                  />
-                </div>
-              </div>
+        {/* Color Wheel Card - Horizontal */}
+        <div className="w-full h-[160px] bg-gradient-to-tr from-[rgba(225,187,255,0.25)] to-[rgba(255,226,255,0.25)] rounded-[16px] border border-[#EAEAEA] shadow-[4px_4px_8px_rgba(0,0,0,0.05)] relative overflow-hidden">
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 w-[120px] h-[120px]">
+            <svg viewBox="0 0 100 100" className="w-full h-full">
+              <path d="M 50,50 L 100,50 A 50,50 0 0,1 93.3,75 Z" fill="#00C2AF" />
+              <path d="M 50,50 L 93.3,75 A 50,50 0 0,1 75,93.3 Z" fill="#009775" />
+              <path d="M 50,50 L 75,93.3 A 50,50 0 0,1 50,100 Z" fill="#99D6EA" />
+              <path d="M 50,50 L 50,100 A 50,50 0 0,1 25,93.3 Z" fill="#808286" />
+              <path d="M 50,50 L 25,93.3 A 50,50 0 0,1 6.7,75 Z" fill="#F8E59A" />
+              <path d="M 50,50 L 6.7,75 A 50,50 0 0,1 0,50 Z" fill="#F395C7" />
+              <path d="M 50,50 L 0,50 A 50,50 0 0,1 6.7,25 Z" fill="#E3006D" />
+              <path d="M 50,50 L 6.7,25 A 50,50 0 0,1 25,6.7 Z" fill="#CE0037" />
+              <path d="M 50,50 L 25,6.7 A 50,50 0 0,1 50,0 Z" fill="#D2298E" />
+              <path d="M 50,50 L 50,0 A 50,50 0 0,1 75,6.7 Z" fill="#7421B0" />
+              <path d="M 50,50 L 75,6.7 A 50,50 0 0,1 93.3,25 Z" fill="#3A48BA" />
+              <path d="M 50,50 L 93.3,25 A 50,50 0 0,1 100,50 Z" fill="#006FC4" />
+            </svg>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] rounded-full overflow-hidden bg-white border-2 border-white shadow-lg">
+              <img
+                src="https://res.cloudinary.com/drvhoqgno/image/upload/v1743339615/pixelcut-export__2_-removebg_tlsny4.png"
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <p className="text-gray-800 text-base font-semibold">Shades That Shine On You</p>
-            <p className="text-gray-600 text-sm mt-2">Discover your perfect color palette</p>
           </div>
-          
-          {/* Body Shape Feature */}
-          <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex justify-center mb-4">
-              <div className="w-full aspect-square flex items-center justify-center">
-                <img
-                  src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742970214/Marianne_Jones_Body_Shape_For_Dresses_6_2048x2048_2_ahcorn.png"
-                  alt="Dress silhouette"
-                  className="w-full h-full object-contain transform hover:scale-105 transition-transform duration-300"
-                />
-              </div>
+          <div className="absolute left-[180px] top-[50%] -translate-y-1/2">
+            <div className="text-[#212121] text-[18px] font-medium font-poppins">
+              Shades That Shine On You
             </div>
-            <p className="text-gray-800 text-base font-semibold">Styles That Flatter You</p>
-            <p className="text-gray-600 text-sm mt-2">Find clothes that enhance your shape</p>
+          </div>
+        </div>
+
+        {/* Styles Card - Horizontal */}
+        <div className="w-full h-[160px] bg-gradient-to-tr from-[rgba(225,187,255,0.25)] to-[rgba(255,226,255,0.25)] rounded-[16px] border border-[#EAEAEA] shadow-[4px_4px_8px_rgba(0,0,0,0.05)] relative overflow-hidden">
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 w-[120px]">
+            <div className="text-[#212121] text-[18px] font-medium font-poppins">
+              Styles That Flatters On You
+            </div>
+          </div>
+          <div className="absolute right-8 top-1/2 -translate-y-1/2 w-[160px] flex justify-center">
+            <img
+              src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742970214/Marianne_Jones_Body_Shape_For_Dresses_6_2048x2048_2_ahcorn.png"
+              alt="Style"
+              className="w-auto h-[128px] object-contain"
+            />
           </div>
         </div>
       </div>
 
       {/* CTA Button */}
-      <div className="w-full mt-8 px-4 max-w-md mx-auto">
-        <button
-          onClick={startAnalysis}
-          className="w-full flex items-center justify-center gap-3 px-8 py-5 
-                   bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-semibold rounded-2xl
-                   hover:from-purple-700 hover:to-pink-700 transition-all duration-300 
-                   shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-        >
-          Get Started
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
+        <div className="w-[312px] mx-auto">
+          <button
+            onClick={startAnalysis}
+            className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow"
+          >
+            Get Started
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -355,53 +362,56 @@ function App() {
   const colorPalette = recommendations?.colors;
 
   return (
-    <ErrorBoundary>
-      <Layout>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route
-          path="/body-shape"
-          element={
-            <BodyShapeAnalysis 
-              onComplete={handleBodyShapeComplete} 
-              currentShape={analysisResults.bodyShape}
-            />
-          }
-        />
-        <Route 
-          path="/skin-tone" 
-          element={
-            <SkinToneAnalysis 
-              currentResults={analysisResults}
-              onComplete={(results) => {
-                setAnalysisResults(prev => ({ ...prev, ...results }));
-                navigate('/auth');
-              }}
-            />
-          }
-        />
-        <Route
-          path="/auth"
-          element={
-            <Auth onSuccess={() => navigate('/recommendations')} />
-          }
-        />
-        <Route 
-          path="/recommendations" 
-          element={
-            <RecommendationsPage 
-              initialResults={analysisResults}
-            />
-          }
-        />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/order-success" element={<OrderSuccess />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
-        <Route path="/admin" element={<AdminPanel />} />
-      </Routes>
-      </Layout>
-    </ErrorBoundary>
+    <>
+      <GoogleTagManager />
+      <ErrorBoundary>
+        <Layout>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route
+            path="/body-shape"
+            element={
+              <BodyShapeAnalysis 
+                onComplete={handleBodyShapeComplete} 
+                currentShape={analysisResults.bodyShape}
+              />
+            }
+          />
+          <Route 
+            path="/skin-tone" 
+            element={
+              <SkinToneAnalysis 
+                currentResults={analysisResults}
+                onComplete={(results) => {
+                  setAnalysisResults(prev => ({ ...prev, ...results }));
+                  navigate('/auth');
+                }}
+              />
+            }
+          />
+          <Route
+            path="/auth"
+            element={
+              <Auth onSuccess={() => navigate('/recommendations')} />
+            }
+          />
+          <Route 
+            path="/recommendations" 
+            element={
+              <RecommendationsPage 
+                initialResults={analysisResults}
+              />
+            }
+          />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/admin" element={<AdminPanel />} />
+        </Routes>
+        </Layout>
+      </ErrorBoundary>
+    </>
   );
 }
 
