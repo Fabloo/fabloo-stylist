@@ -91,6 +91,42 @@ export function Profile() {
     }
   };
 
+  const resetProfileAnalysis = async () => {
+    try {
+      // First check if we have a session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        throw new Error('No active session');
+      }
+
+      // Update the profile directly in Supabase
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          body_shape: null,
+          skin_tone: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', session.user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update local state through updateProfile
+      await updateProfile({ 
+        bodyShape: undefined, 
+        skinTone: undefined 
+      });
+
+      // Navigate to the body shape analysis page
+      navigate('/body-shape');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reset profile analysis');
+      console.error('Error resetting profile analysis:', err);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
@@ -167,6 +203,14 @@ export function Profile() {
                   )}
                 </div>
               </div>
+              <button
+                onClick={resetProfileAnalysis}
+                className="mt-4 w-full flex justify-center items-center px-6 py-3 border
+                         border-transparent rounded-md shadow-sm text-base font-medium
+                         text-white bg-red-600 hover:bg-red-700 transition-colors"
+              >
+                Retake Analysis
+              </button>
             </div>
 
             <div>
