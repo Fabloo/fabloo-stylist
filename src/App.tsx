@@ -15,6 +15,7 @@ import { AdminPanel } from './pages/AdminPanel';
 import type { BodyShape, UserProfile, SkinTone } from './types';
 import { getStyleRecommendations } from './utils/styleRecommendations';
 import { GoogleTagManager } from './components/GoogleTagManager';
+import ColorWheel from './components/ColorWheel';
 
 type RecommendationsPageProps = {
   initialResults: {
@@ -129,7 +130,7 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
           
           {isAnalysisExpanded && (
             <div className="px-8 pb-6">
-              <div className="space-y-8">
+              <div className="space-y-4">
                 {/* Basic Analysis Results */}
                 <div className="grid grid-cols-2 gap-8">
                   <div className="space-y-3">
@@ -176,11 +177,16 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
                 </div>
                 
                 {/* Description */}
-                <div className="border-t border-b border-gray-100 py-8">
+                <div className="border-t border-b border-gray-100 py-4">
                   <h3 className="text-[#212121] text-xl font-semibold mb-3 font-poppins">Balanced Proportions</h3>
                   <p className="text-[#565656] text-lg leading-[27px] font-poppins">
                     Your shoulders and hips are about the same width with a defined waist.
                   </p>
+                </div>
+
+                {/* Color Wheel */}
+                <div>
+                  <ColorWheel selectedTone={profile.skinTone?.name || 'Fair Cool'} />
                 </div>
                 
                 {/* Style Recommendations */}

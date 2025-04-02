@@ -85,6 +85,7 @@ export function Checkout({ onSuccess }: Props) {
   const [validationErrors, setValidationErrors] = useState<{
     payment?: string;
     address?: string;
+    terms?: string;
   }>({});
   const [address, setAddress] = useState<ShippingAddress>({
     fullName: '',
@@ -97,6 +98,7 @@ export function Checkout({ onSuccess }: Props) {
     email: ''
   });
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('address');
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
     fetchCartItems();
@@ -176,30 +178,43 @@ export function Checkout({ onSuccess }: Props) {
   };
 
   const validateAddress = () => {
-    const required = ['fullName', 'addressLine1', 'city', 'state', 'pincode', 'phone', 'email'];
-    const missing = required.filter(field => !address[field as keyof ShippingAddress]);
+    const requiredFields = [
+      'fullName',
+      'addressLine1',
+      'city',
+      'state',
+      'pincode',
+      'email',
+      'phone'
+    ] as const;
+
+    const missingFields = requiredFields.filter(field => !address[field] || !address[field].trim());
     
-    if (missing.length > 0) {
-      throw new Error(`Please fill in all required fields: ${missing.join(', ')}`);
+    if (missingFields.length > 0) {
+      throw new Error(`Please fill in all required fields: ${missingFields.map(field => field.replace(/([A-Z])/g, ' $1').toLowerCase()).join(', ')}`);
     }
 
-    if (!/^\d{6}$/.test(address.pincode)) {
-      throw new Error('Please enter a valid 6-digit pincode');
-    }
-
-    if (!/^\d{10}$/.test(address.phone)) {
+    // Validate phone number format
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(address.phone)) {
       throw new Error('Please enter a valid 10-digit phone number');
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address.email)) {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(address.email)) {
       throw new Error('Please enter a valid email address');
+    }
+
+    // Validate pincode format
+    const pincodeRegex = /^\d{6}$/;
+    if (!pincodeRegex.test(address.pincode)) {
+      throw new Error('Please enter a valid 6-digit pincode');
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Reset errors
     setError(null);
     setValidationErrors({});
 
@@ -208,7 +223,7 @@ export function Checkout({ onSuccess }: Props) {
 
       // Check for empty cart first
       if (!cartItems || cartItems.length === 0) {
-        navigate('/cart'); // Redirect to cart page
+        navigate('/cart');
         return;
       }
 
@@ -218,6 +233,7 @@ export function Checkout({ onSuccess }: Props) {
         return;
       }
 
+      // Validate address
       try {
         validateAddress();
       } catch (err) {
@@ -225,6 +241,12 @@ export function Checkout({ onSuccess }: Props) {
           ...prev, 
           address: err instanceof Error ? err.message : 'Invalid address'
         }));
+        return;
+      }
+
+      // Validate terms acceptance
+      if (!termsAccepted) {
+        setValidationErrors(prev => ({ ...prev, terms: 'Please accept the terms and conditions' }));
         return;
       }
 
@@ -644,6 +666,23 @@ export function Checkout({ onSuccess }: Props) {
                 {validationErrors.address}
               </div>
             )}
+
+            <div className="mt-6">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
+                />
+                <span className="text-sm text-gray-600">
+                  I accept the terms and conditions
+                </span>
+              </label>
+              {validationErrors.terms && (
+                <p className="text-sm text-red-600 mt-1">{validationErrors.terms}</p>
+              )}
+            </div>
 
             <div className="mt-6 flex justify-between">
               <button
