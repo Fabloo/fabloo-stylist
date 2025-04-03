@@ -184,31 +184,14 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
               <button
                 key={option.id}
                 onClick={() => handleAnswer(option)}
-                className="w-full p-4 text-left rounded-[14px] border border-[#E5E5E5]
-                         hover:border-[#9333EA] hover:bg-[#F5F3FF] transition-colors
+                className="w-full p-4 text-left rounded-[14px] border border-transparent
+                         hover:border-[#B252FF] bg-white hover:bg-gray-50 transition-colors
                          text-[#1A1A1A] text-[16px] leading-[24px]"
               >
                 {option.text}
               </button>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* Sticky Next Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E5E5E5]">
-        <div className="max-w-md mx-auto">
-          <button
-            onClick={() => currentQuestion < QUIZ_QUESTIONS.length - 1 && setCurrentQuestion(currentQuestion + 1)}
-            className="w-full py-4 px-6 bg-white border border-[#E5E5E5] rounded-[14px]
-                     text-[#1A1A1A] text-[16px] leading-[24px] font-medium hover:border-[#9333EA] 
-                     transition-colors flex items-center justify-center gap-2"
-          >
-            Next
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M4 10H16M16 10L10 4M16 10L10 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
         </div>
       </div>
     </div>

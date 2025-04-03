@@ -52,7 +52,7 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
         <button
           onClick={() => navigate('/body-shape')}
           className="inline-flex items-center px-6 py-3 bg-black text-white
-                   rounded-lg hover:bg-indigo-700 transition-colors"
+                   rounded-lg hover:bg-gray-800 transition-colors duration-200"
         >
           Start Analysis
         </button>
@@ -90,7 +90,7 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
         <button
           onClick={() => navigate('/body-shape')}
           className="inline-flex items-center px-6 py-3 bg-black text-white
-                   rounded-lg hover:bg-indigo-700 transition-colors"
+                   rounded-lg hover:bg-gray-800 transition-colors duration-200"
         >
           Start Analysis
         </button>
@@ -111,8 +111,8 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
             </div>
             <button
               onClick={() => setIsAuthenticated(true)}
-              className="px-4 py-2 bg-black text-white rounded-lg hover:bg-indigo-700
-                       transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800
+                       transition-colors duration-200 text-sm font-medium"
             >
               Sign In
             </button>

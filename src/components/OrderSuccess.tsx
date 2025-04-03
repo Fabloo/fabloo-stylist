@@ -24,7 +24,8 @@ export function OrderSuccess() {
           onClick={() => navigate('/profile')}
           className="w-full flex justify-center items-center px-6 py-3 border
                    border-transparent rounded-lg shadow-sm text-base font-medium
-                   text-white bg-black hover:bg-indigo-700"
+                   text-white bg-gradient-to-r from-[#B252FF] to-[#F777F7] 
+                   hover:opacity-90 transition-opacity duration-200"
         >
           View Order Status
         </button>
@@ -32,8 +33,11 @@ export function OrderSuccess() {
         <button
           onClick={() => navigate('/')}
           className="w-full flex justify-center items-center gap-2 px-6 py-3
-                   border-2 border-gray-300 rounded-lg text-base font-medium
-                   text-gray-700 hover:bg-gray-50"
+                   rounded-lg text-base font-medium relative
+                   text-[#B252FF] hover:text-[#F777F7] transition-colors duration-200
+                   before:absolute before:inset-0 before:rounded-lg before:p-[1px]
+                   before:bg-gradient-to-r before:from-[#B252FF] before:to-[#F777F7]
+                   before:content-[''] before:-z-10 bg-white"
         >
           <ShoppingBag className="w-5 h-5" />
           Continue Shopping

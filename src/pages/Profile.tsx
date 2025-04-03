@@ -219,7 +219,8 @@ export function Profile() {
                 onClick={() => navigate('/recommendations')}
                 className="w-full flex justify-center items-center px-6 py-3 border
                          border-transparent rounded-md shadow-sm text-base font-medium
-                         text-white bg-black hover:bg-indigo-700"
+                         text-white bg-gradient-to-r from-[#B252FF] to-[#F777F7] 
+                         hover:opacity-90 transition-opacity duration-200"
               >
                 View Style Recommendations
               </button>

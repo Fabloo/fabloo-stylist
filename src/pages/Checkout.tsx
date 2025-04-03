@@ -543,11 +543,18 @@ export function Checkout({ onSuccess }: Props) {
                 </select>
               </div>
             </div>
+
+            {validationErrors.address && (
+              <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg text-sm">
+                {validationErrors.address}
+              </div>
+            )}
+
             <div className="mt-6 flex justify-end">
               <button
                 type="button"
                 onClick={nextStep}
-                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-indigo-700"
+                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors duration-200"
               >
                 Continue to Payment
               </button>
@@ -595,14 +602,14 @@ export function Checkout({ onSuccess }: Props) {
               <button
                 type="button"
                 onClick={previousStep}
-                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={nextStep}
-                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-indigo-700"
+                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors duration-200"
               >
                 Continue to Review
               </button>
@@ -694,14 +701,14 @@ export function Checkout({ onSuccess }: Props) {
               <button
                 type="button"
                 onClick={previousStep}
-                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={loading || cartItems.length === 0}
-                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors duration-200"
               >
                 {loading ? 'Processing...' : 'Place Order'}
               </button>

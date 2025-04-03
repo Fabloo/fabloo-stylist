@@ -17,7 +17,7 @@ export function Layout({ children }: LayoutProps) {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const { items: cartItems, isLoading, error, removeFromCart, totalItems, totalAmount } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, setIsAuthenticated } = useAuth();
   const { wishlistItems,  removeFromWishlist, loading } = useWishlist();
 
 
@@ -186,7 +186,7 @@ export function Layout({ children }: LayoutProps) {
             </p>
             <button
               onClick={handleCheckout}
-              className="w-full inline-flex items-center justify-center px-6 py-4 border border-transparent rounded-lg shadow-lg text-lg font-medium text-white bg-black hover:bg-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="w-full inline-flex items-center justify-center px-6 py-4 border border-transparent rounded-lg shadow-lg text-lg font-medium text-white bg-gradient-to-r from-[#B252FF] to-[#F777F7] hover:opacity-90 transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#B252FF]"
             >
               Proceed to Checkout
             </button>

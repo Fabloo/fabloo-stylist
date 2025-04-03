@@ -173,12 +173,31 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
         <p className="text-lg text-gray-600 mb-8">
           Let's start by analyzing your body shape. Choose your preferred method.
         </p>
-        {/* Add Image Above Method Selection */}
-        <img
+        
+        {/* Example image */}
+        <img 
           src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742291530/Frame_1000003512_kf4boz.png"
-          alt="Body Shape Analysis Guide"
-          className="w-64 mx-auto mb-8"
+          alt="Clothing examples"
+          className="w-[200px] mx-auto mb-4"
         />
+
+        {/* Upload Photo button moved below image */}
+        <div className="w-[312px] mx-auto">
+          <label className="block">
+            <div className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2 cursor-pointer">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6.66667 6.66667V5C6.66667 3.15905 8.15905 1.66667 10 1.66667C11.841 1.66667 13.3333 3.15905 13.3333 5V6.66667M10 11.6667V13.3333M5 18.3333H15C16.3807 18.3333 17.5 17.214 17.5 15.8333V9.16667C17.5 7.78595 16.3807 6.66667 15 6.66667H5C3.61929 6.66667 2.5 7.78595 2.5 9.16667V15.8333C2.5 17.214 3.61929 18.3333 5 18.3333Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Upload Photo
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+          </label>
+        </div>
 
         {error && (
           <div className="p-4 bg-red-50 text-red-700 rounded-lg mb-8">
@@ -186,29 +205,27 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
           </div>
         )}
 
-        {/* Sticky Footer Buttons */}
+        {/* Sticky Footer */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
           <div className="w-[312px] mx-auto space-y-3">
+            {/* Info section with icon and text */}
+            <div className="flex items-center gap-6 p-6 bg-white border border-[#EAEAEA] rounded-[12px]">
+              <img 
+                src="https://res.cloudinary.com/drvhoqgno/image/upload/v1743678198/Screenshot_2025-04-03_at_4.24.26_PM_1_nm9cfe.png"
+                alt="Info"
+                className="w-[64px] h-[64px]"
+              />
+              <p className="text-[#1A1A1A] text-[16px] leading-[24px] font-normal flex-1">
+                Discover your perfect fit! Take our quick body shape quiz now!
+              </p>
+            </div>
+
             <button
               onClick={() => setMethod('quiz')}
               className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow"
             >
               Take Quiz
             </button>
-            <label className="block">
-              <div className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2 cursor-pointer">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6.66667 6.66667V5C6.66667 3.15905 8.15905 1.66667 10 1.66667C11.841 1.66667 13.3333 3.15905 13.3333 5V6.66667M10 11.6667V13.3333M5 18.3333H15C16.3807 18.3333 17.5 17.214 17.5 15.8333V9.16667C17.5 7.78595 16.3807 6.66667 15 6.66667H5C3.61929 6.66667 2.5 7.78595 2.5 9.16667V15.8333C2.5 17.214 3.61929 18.3333 5 18.3333Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Upload Photo
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-            </label>
           </div>
         </div>
       </div>
@@ -225,6 +242,16 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
         
         <div className="bg-white p-8 rounded-xl shadow-sm">
           <div className="text-left">
+            {/* Styles heading with proper spacing */}
+            <div className="flex flex-col mb-8">
+              <h3 className="text-xl font-medium text-gray-900 mb-16">Styles That Flatters On You</h3>
+              <div className="flex gap-6">
+                <img src="/dress-1.svg" alt="Dress style 1" className="h-12" />
+                <img src="/dress-2.svg" alt="Dress style 2" className="h-12" />
+                <img src="/dress-3.svg" alt="Dress style 3" className="h-12" />
+              </div>
+            </div>
+
             <h3 className="text-xl font-medium text-gray-900 mb-4">
               {QUIZ_QUESTIONS[currentQuestion].question}
             </h3>
@@ -250,10 +277,7 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
       <h2 className="text-3xl font-bold text-gray-900 mb-4">Body Shape Analysis</h2>
       <p className="text-lg text-gray-600 mb-8">
         Let's start by analyzing your body shape. Choose your preferred method.
-      </p> {/* Add Image Below the Text */}
-  <div className="mb-6 flex justify-center">
-    <img src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742291530/Frame_1000003512_kf4boz.png" alt="Body Shape Analysis" className="w-64 h-auto" />
-  </div>
+      </p>
 
       <div className="grid grid-cols-2 gap-4 mb-8">
         <button

@@ -267,8 +267,8 @@ export function ProductDetail({ id, onClose }: Props) {
                 onClick={() => addToCart(id)}
                 disabled={addingToCart || product.stock <= 0}
                 className="w-full flex items-center justify-center gap-2 py-3 px-8
-                         bg-black text-white rounded-full font-medium
-                         hover:bg-indigo-700 transition-colors disabled:opacity-50
+                         bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white rounded-full font-medium
+                         hover:opacity-90 transition-opacity duration-200 disabled:opacity-50
                          disabled:cursor-not-allowed"
               >
                 <ShoppingBag className="w-5 h-5" />
