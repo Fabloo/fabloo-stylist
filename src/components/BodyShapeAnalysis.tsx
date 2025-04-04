@@ -45,6 +45,12 @@ type QuizAnswer = {
   optionId: string;
 };
 
+declare global {
+  interface Window {
+    gtag: (command: string, event: string, params: any) => void;
+  }
+}
+
 export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
   const navigate = useNavigate();
   const { profile, updateProfile } = useProfile();
@@ -96,6 +102,12 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
   };
 
   const handleQuizAnswer = (optionId: string) => {
+    // Track quiz question events with bodyshape-specific category
+    window.gtag('event', `Q${currentQuestion + 1}`, {
+      'event_category': 'Bodyshape Quiz',
+      'event_label': `Q${currentQuestion + 1}`
+    });
+
     const newAnswers = [...answers, { 
       questionId: QUIZ_QUESTIONS[currentQuestion].id, 
       optionId 
@@ -107,7 +119,6 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
     } else {
       setIsAnalyzing(true);
       const bodyShape = determineBodyShape(newAnswers);
-      // Update profile with body shape
       console.log(bodyShape);
       updateProfile({
         bodyShape
@@ -120,6 +131,12 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Track Upload Photo event with bodyshape-specific category
+    window.gtag('event', 'Upload Photo', {
+      'event_category': 'Bodyshape Quiz',
+      'event_label': 'Upload Photo'
+    });
+
     const file = event.target.files?.[0];
     if (!file) return;
     setError(null);
@@ -155,6 +172,15 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleQuizStart = () => {
+    // Track Quiz event with bodyshape-specific category
+    window.gtag('event', 'Quiz', {
+      'event_category': 'Bodyshape Quiz',
+      'event_label': 'Quiz'
+    });
+    setMethod('quiz');
   };
 
   if (isAnalyzing) {
@@ -221,7 +247,7 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
             </div>
 
             <button
-              onClick={() => setMethod('quiz')}
+              onClick={handleQuizStart}
               className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow"
             >
               Take Quiz
