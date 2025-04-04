@@ -69,10 +69,17 @@ export function Auth({ onSuccess }: Props) {
       // Set the user in the auth store
       useAuthStore.getState().setUser(user);
 
-      // Create/update profile
+      // Create/update profile with default values
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert([{ id: user.id }], { onConflict: 'id' });
+        .upsert([{ 
+          id: user.id,
+          address_line1: null,
+          address_line2: null,
+          city: null,
+          state: null,
+          pincode: null
+        }], { onConflict: 'id' });
 
       if (profileError) throw profileError;
       

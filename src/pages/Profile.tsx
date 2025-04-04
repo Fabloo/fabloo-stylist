@@ -25,12 +25,31 @@ export function Profile() {
   const { isAuthenticated, isLoading } = useAuth('/auth');
   const { profile, updateProfile } = useProfile();
   const { logout } = useAuthStore();
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    addressLine1: profile?.address_line1 || '',
+    addressLine2: profile?.address_line2 || '',
+    city: profile?.city || '',
+    state: profile?.state || '',
+    pincode: profile?.pincode || ''
+  });
   console.log("authenticated", isAuthenticated)
   useEffect(() => {
     if (isAuthenticated) {
       fetchOrders();
     }
-  }, []);
+    if (profile) {
+      setAddressForm({
+        addressLine1: profile?.address_line1 || '',
+        addressLine2: profile?.address_line2 || '',
+        city: profile?.city || '',
+        state: profile?.state || '',
+        pincode: profile?.pincode || ''
+      });
+    }
+    console.log("addressForm", addressForm)
+    console.log("profile", profile)
+  }, [isAuthenticated, profile]);
 
   const fetchOrders = async () => {
     try {
@@ -127,6 +146,47 @@ export function Profile() {
     }
   };
 
+  const handleAddressSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        throw new Error('No active session');
+      }
+
+      // Update the profile in Supabase
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          address_line1: addressForm.addressLine1,
+          address_line2: addressForm.addressLine2,
+          city: addressForm.city,
+          state: addressForm.state,
+          pincode: addressForm.pincode,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', session.user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update local state
+      await updateProfile({
+        address_line1: addressForm.addressLine1,
+        address_line2: addressForm.addressLine2,
+        city: addressForm.city,
+        state: addressForm.state,
+        pincode: addressForm.pincode
+      });
+
+      setIsEditingAddress(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update address');
+      console.error('Error updating address:', err);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
@@ -211,6 +271,123 @@ export function Profile() {
               >
                 Retake Analysis
               </button>
+            </div>
+
+            {/* Address Section */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Shipping Address</h3>
+              {isEditingAddress ? (
+                <form onSubmit={handleAddressSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Address Line 1
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.addressLine1}
+                      onChange={(e) => setAddressForm(prev => ({ ...prev, addressLine1: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Address Line 2
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.addressLine2}
+                      onChange={(e) => setAddressForm(prev => ({ ...prev, addressLine2: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        City
+                      </label>
+                      <input
+                        type="text"
+                        value={addressForm.city}
+                        onChange={(e) => setAddressForm(prev => ({ ...prev, city: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        State
+                      </label>
+                      <input
+                        type="text"
+                        value={addressForm.state}
+                        onChange={(e) => setAddressForm(prev => ({ ...prev, state: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Pincode
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.pincode}
+                      onChange={(e) => setAddressForm(prev => ({ ...prev, pincode: e.target.value }))}
+                      pattern="[0-9]{6}"
+                      maxLength={6}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-4">
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-2 bg-black text-white rounded-md hover:bg-indigo-700 transition-colors"
+                    >
+                      Save Address
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingAddress(false)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div>
+                  {profile?.address_line1 ? (
+                    <div className="space-y-2">
+                      <p className="text-gray-900">{profile.address_line1}</p>
+                      {profile.address_line2 && (
+                        <p className="text-gray-900">{profile.address_line2}</p>
+                      )}
+                      <p className="text-gray-900">
+                        {profile.city}, {profile.state} - {profile.pincode}
+                      </p>
+                      <button
+                        onClick={() => setIsEditingAddress(true)}
+                        className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Edit Address
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-gray-500 mb-4">No address saved</p>
+                      <button
+                        onClick={() => setIsEditingAddress(true)}
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Add Address
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>
