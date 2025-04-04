@@ -270,11 +270,11 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
           <div className="text-left">
             {/* Styles heading with proper spacing */}
             <div className="flex flex-col mb-8">
-              <h3 className="text-xl font-medium text-gray-900 mb-24">Styles That Flatters On You</h3>
-              <div className="flex gap-6">
-                <img src="/dress-1.svg" alt="Dress style 1" className="h-12" />
-                <img src="/dress-2.svg" alt="Dress style 2" className="h-12" />
-                <img src="/dress-3.svg" alt="Dress style 3" className="h-12" />
+              <h3 className="text-xl font-medium text-gray-900 mb-6">Styles That Flatters On You</h3>
+              <div className="flex justify-center gap-12">
+                <img src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742233399/Screenshot_2025-03-17_at_11.13.13_PM_vcz15d.png" alt="Dress style 1" className="h-24 w-auto" />
+                <img src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742233389/Screenshot_2025-03-17_at_11.13.04_PM_mxk2zf.png" alt="Dress style 2" className="h-24 w-auto" />
+                <img src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742233359/Screenshot_2025-03-17_at_11.12.34_PM_k8vyxe.png" alt="Dress style 3" className="h-24 w-auto" />
               </div>
             </div>
 

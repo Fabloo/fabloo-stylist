@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ShoppingBag, Heart, ArrowLeft } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { useCart } from '../hooks/useCart';
@@ -10,11 +10,15 @@ const supabase = createClient(
 );
 
 type Props = {
-  id: string;
-  onClose: () => void;
+  id?: string;
+  onClose?: () => void;
 };
 
-export function ProductDetail({ id, onClose }: Props) {
+export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
+  const { id: urlId } = useParams();
+  const navigate = useNavigate();
+  const id = propId || urlId;
+  const onClose = propOnClose || (() => navigate(-1));
   const { fetchCart } = useCart();
   const [product, setProduct] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
@@ -37,11 +41,23 @@ export function ProductDetail({ id, onClose }: Props) {
 
 
   React.useEffect(() => {
+    if (!id) return;
     fetchProduct();
     checkSession();
+    
+    // Track Detail page view event
+    window.gtag('event', 'Detail page click', {
+      'event_category': 'Funnel',
+      'event_label': 'Detail page click'
+    });
   }, [id]);
 
   const fetchProduct = async () => {
+    if (!id) {
+      setError('Product ID is required');
+      return;
+    }
+
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -92,8 +108,19 @@ export function ProductDetail({ id, onClose }: Props) {
   //   }
   // };
 
-  const addToCart = async (itemId: string) => {
+  const addToCart = async (itemId: string | undefined) => {
+    if (!itemId) {
+      setError('Product ID is required');
+      return;
+    }
+
     try {
+      // Track Cart event
+      window.gtag('event', 'Cart', {
+        'event_category': 'Funnel',
+        'event_label': 'Cart'
+      });
+
       if (!isAuthenticated) {
         throw new Error('Please sign in to continue');
       }
@@ -112,7 +139,7 @@ export function ProductDetail({ id, onClose }: Props) {
       const { error } = await supabase
         .from('cart_items')
         .upsert(
-          { user_id: userId, item_id: itemId, quantity: 1 },
+          { user_id: userId, item_id: itemId },
           { onConflict: 'user_id,item_id' }
         );
 
@@ -156,10 +183,7 @@ export function ProductDetail({ id, onClose }: Props) {
         .from('wishlist_items')
         .upsert(
           { user_id: userId, item_id: itemId },
-          { 
-            onConflict: 'user_id,item_id',
-            returning: 'minimal'
-          }
+          { onConflict: 'user_id,item_id' }
         );
 
       if (error) {
@@ -179,6 +203,26 @@ export function ProductDetail({ id, onClose }: Props) {
     } finally {
       setAddingToWishlist(false);
     }
+  };
+
+  const handleSizeSelection = (size: string) => {
+    // Track Size selection event
+    window.gtag('event', 'Size selection', {
+      'event_category': 'Funnel',
+      'event_label': 'Size selection'
+    });
+    
+    // Add your size selection logic here
+  };
+
+  const handleCheckout = () => {
+    // Track Cart checkout event
+    window.gtag('event', 'Cart checkout', {
+      'event_category': 'Funnel',
+      'event_label': 'Cart checkout'
+    });
+    
+    // Add your checkout logic here
   };
 
   if (loading) {

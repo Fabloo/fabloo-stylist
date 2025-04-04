@@ -9,6 +9,20 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
+type CartItemResponse = {
+  id: string;
+  quantity: number;
+  size_selected: string;
+  inventory_items: {
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+    image_url: string;
+    sizes: string[];
+  };
+};
+
 type CartItem = {
   id: string;
   quantity: number;
@@ -83,6 +97,7 @@ export function Checkout({ onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{
     payment?: string;
     address?: string;
@@ -136,33 +151,31 @@ export function Checkout({ onSuccess }: Props) {
           description,
           price,
           image_url,
-          stock
+          sizes
         )
       `)
       .eq('user_id', user.id);
-
-      // const { data, error } = await supabase
-      //   .from('cart_items')
-      //   .select(`
-      //     id,
-      //     quantity,
-      //     size_selected,
-      //     inventory_items (
-      //       id,
-      //       name,
-      //       price,
-      //       description,
-      //       image_url,
-      //       sizes,
-      //     )
-      //   `)
-      //   .eq('user_id', user.id);
 
       if (error) {
         throw new Error(`Failed to fetch cart items: ${error.message}`);
       }
 
-      setCartItems(data || []);
+      // Transform the response to match CartItem type
+      const transformedData: CartItem[] = (data as unknown as CartItemResponse[])?.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        size_selected: item.size_selected,
+        inventory_items: {
+          id: item.inventory_items.id,
+          name: item.inventory_items.name,
+          price: item.inventory_items.price,
+          description: item.inventory_items.description,
+          image_url: item.inventory_items.image_url,
+          sizes: item.inventory_items.sizes
+        }
+      })) || [];
+
+      setCartItems(transformedData);
     } catch (err) {
       const errorMessage = err instanceof Error 
         ? err.message 
@@ -215,6 +228,15 @@ export function Checkout({ onSuccess }: Props) {
     }
   };
 
+  // Track checkout step changes
+  useEffect(() => {
+    window.gtag('event', 'checkout_step', {
+      event_category: 'Funnel',
+      event_label: currentStep,
+      value: currentStep === 'address' ? 1 : currentStep === 'payment' ? 2 : 3
+    });
+  }, [currentStep]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -232,6 +254,10 @@ export function Checkout({ onSuccess }: Props) {
       // Validate payment method
       if (!paymentMethod) {
         setValidationErrors(prev => ({ ...prev, payment: 'Please select a payment method' }));
+        window.gtag('event', 'checkout_error', {
+          event_category: 'Funnel',
+          event_label: 'payment_method_missing'
+        });
         return;
       }
 
@@ -243,12 +269,21 @@ export function Checkout({ onSuccess }: Props) {
           ...prev, 
           address: err instanceof Error ? err.message : 'Invalid address'
         }));
+        window.gtag('event', 'checkout_error', {
+          event_category: 'Funnel',
+          event_label: 'address_validation_failed',
+          error_message: err instanceof Error ? err.message : 'Invalid address'
+        });
         return;
       }
 
       // Validate terms acceptance
       if (!termsAccepted) {
         setValidationErrors(prev => ({ ...prev, terms: 'Please accept the terms and conditions' }));
+        window.gtag('event', 'checkout_error', {
+          event_category: 'Funnel',
+          event_label: 'terms_not_accepted'
+        });
         return;
       }
 
@@ -321,10 +356,31 @@ export function Checkout({ onSuccess }: Props) {
 
       // Refresh cart items after successful order
       await fetchCartItems();
+
+      // Track successful order placement
+      window.gtag('event', 'purchase', {
+        event_category: 'Funnel',
+        event_label: 'order_placed',
+        transaction_id: order.id,
+        value: totalAmount,
+        items: cartItems.map(item => ({
+          id: item.inventory_items.id,
+          name: item.inventory_items.name,
+          quantity: item.quantity,
+          price: item.inventory_items.price,
+          variant: item.size_selected
+        }))
+      });
+
       // Redirect to success page
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to place order');
+      window.gtag('event', 'checkout_error', {
+        event_category: 'Funnel',
+        event_label: 'order_placement_failed',
+        error_message: err instanceof Error ? err.message : 'Failed to place order'
+      });
       console.error('Checkout error:', err);
     } finally {
       setLoading(false);
@@ -366,18 +422,35 @@ export function Checkout({ onSuccess }: Props) {
       try {
         validateAddress();
         setCurrentStep('payment');
+        window.gtag('event', 'checkout_progress', {
+          event_category: 'Funnel',
+          event_label: 'address_completed'
+        });
       } catch (err) {
         setValidationErrors(prev => ({ 
           ...prev, 
           address: err instanceof Error ? err.message : 'Invalid address'
         }));
+        window.gtag('event', 'checkout_error', {
+          event_category: 'Funnel',
+          event_label: 'address_validation_failed',
+          error_message: err instanceof Error ? err.message : 'Invalid address'
+        });
       }
     } else if (currentStep === 'payment') {
       if (!paymentMethod) {
         setValidationErrors(prev => ({ ...prev, payment: 'Please select a payment method' }));
+        window.gtag('event', 'checkout_error', {
+          event_category: 'Funnel',
+          event_label: 'payment_method_missing'
+        });
         return;
       }
       setCurrentStep('review');
+      window.gtag('event', 'checkout_progress', {
+        event_category: 'Funnel',
+        event_label: 'payment_completed'
+      });
     }
   };
 

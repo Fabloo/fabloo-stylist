@@ -1,9 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, ShoppingBag } from 'lucide-react';
 
 export function OrderSuccess() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Track Order Placed event
+    window.gtag('event', 'Placed', {
+      'event_category': 'Funnel',
+      'event_label': 'Placed'
+    });
+  }, []);
+
+  const handleViewOrderStatus = () => {
+    // Track Order tracking event
+    window.gtag('event', 'Order tracking', {
+      'event_category': 'Profile clicked',
+      'event_label': 'Order tracking'
+    });
+    navigate('/profile');
+  };
 
   return (
     <div className="max-w-2xl mx-auto text-center py-16">
@@ -21,7 +38,7 @@ export function OrderSuccess() {
 
       <div className="space-y-4">
         <button
-          onClick={() => navigate('/profile')}
+          onClick={handleViewOrderStatus}
           className="w-full flex justify-center items-center px-6 py-3 border
                    border-transparent rounded-lg shadow-sm text-base font-medium
                    text-white bg-gradient-to-r from-[#B252FF] to-[#F777F7] 
