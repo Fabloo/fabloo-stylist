@@ -16,6 +16,7 @@ import type { BodyShape, UserProfile, SkinTone } from './types';
 import { getStyleRecommendations } from './utils/styleRecommendations';
 import { GoogleTagManager } from './components/GoogleTagManager';
 import ColorWheel from './components/ColorWheel';
+import MetaPixel from './components/MetaPexel';
 
 type RecommendationsPageProps = {
   initialResults: {
@@ -357,7 +358,7 @@ function LandingPage() {
 }
 
 function App() {
-  const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
+  // const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<{
     bodyShape?: BodyShape;
     skinTone?: SkinTone;
@@ -369,6 +370,9 @@ function App() {
     navigate('/skin-tone');
   };
 
+
+
+
   const recommendations = analysisResults.bodyShape && analysisResults.skinTone 
     ? getStyleRecommendations(analysisResults.bodyShape, analysisResults.skinTone)
     : null;
@@ -377,6 +381,7 @@ function App() {
   return (
     <>
       <GoogleTagManager />
+      <MetaPixel />
       <ErrorBoundary>
         <Layout>
         <Routes>

@@ -30,6 +30,11 @@ export type UserProfile = {
     occasions: string[];
     priceRange: [number, number];
   };
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
 };
 
 export type AnalysisResult = {

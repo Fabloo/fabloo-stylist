@@ -43,6 +43,70 @@ type Return = {
   };
 };
 
+interface InventoryItem {
+  id: string;
+  name: string;
+  description: string;
+  price: string;  // Changed to string since we're handling conversion
+  stock: string;  // Changed to string since we're handling conversion
+  image_url: string;
+  image_url_2?: string;
+  image_url_3?: string;
+  brand_name?: string;
+  sizes: string;  // Changed to string since we're storing as JSON string
+  body_shapes: string;  // Changed to string since we're storing as JSON string
+  color_tones: string;  // Changed to string since we're storing as JSON string
+  dress_type: string;  // Changed to string since we're storing as JSON string
+}
+
+interface DressAttributes {
+  fabric: string | string[];
+  length: string;
+  primary_colour: string | string[];
+  primary_shades: string[];
+  pattern: string | string[];
+  neck: string | string[];
+  occasion: string | string[];
+  print: string | string[];
+  shape: string | string[];
+  sleeve_length: string;
+  sleeve_styling: string;
+}
+
+interface CSVInventoryItem {
+  [key: string]: any;  // Add index signature
+  name?: string;
+  description?: string;
+  price?: number;
+  stock?: number;
+  image_url?: string;
+  image_url_2?: string;
+  image_url_3?: string;
+  brand_name?: string;
+  sizes?: string[];
+  body_shapes?: string[];
+  color_tones?: string[];
+  dress_type?: string[];
+  dress_attributes?: string;  // JSON string
+}
+
+interface DBInventoryItem {
+  id?: string;
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  image_url: string;
+  image_url_2: string | null;
+  image_url_3: string | null;
+  brand_name: string | null;
+  sizes: string[];
+  body_shapes: string[];
+  color_tones: string[];
+  dress_type: string[];
+  dress_attributes?: DressAttributes;
+}
+
 export function AdminPanel() {
   const { isAdmin, user } = useAuthStore();
   const navigate = useNavigate();
@@ -140,64 +204,237 @@ export function AdminPanel() {
 
   const handleInventorySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    
+    const formData = new FormData(e.currentTarget);
+    const file = formData.get('file') as File;
+
+    if (!file) {
+      setError('Please select a file');
+      return;
+    }
+
     try {
-      setError(null);
-      
-      const itemData = {
-        name: formData.get('name'),
-        description: formData.get('description'),
-        price: parseFloat(formData.get('price') as string),
-        stock: parseInt(formData.get('stock') as string),
-        sizes: (formData.get('sizes') as string).split(',').map(s => s.trim()),
-        image_url: formData.get('image_url'),
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const text = e.target?.result;
+        if (typeof text !== 'string') return;
+
+        const rows = text.split('\n').filter(row => row.trim());
+        const headers = rows[0].split(',').map(h => h.trim());
+        const items: CSVInventoryItem[] = [];
+
+        for (let i = 1; i < rows.length; i++) {
+          const values = rows[i].split(',').map(v => v.trim());
+          const item: CSVInventoryItem = {};
+
+          headers.forEach((headerOrNull: string | null, index: number) => {
+            const header = headerOrNull || '';
+            const rawValue = values[index];
+            
+            // Skip empty values for optional fields
+            if ((!rawValue || rawValue === '') && !requiredFields.includes(header)) {
+              return;
+            }
+
+            // Ensure we have a string to work with
+            const stringValue = String(rawValue || '').trim();
+            let value: any = stringValue;
+
+            // Handle arrays
+            if (['body_shapes', 'sizes', 'color_tones', 'dress_type'].includes(header)) {
+              value = stringValue ? stringValue.split(';').filter(Boolean).map(val => val.trim()) : [];
+            }
+            
+            // Handle dress attributes
+            if (header === 'dress_attributes') {
+              try {
+                if (!stringValue) {
+                  throw new Error('Dress attributes cannot be empty');
+                }
+                
+                // Parse the JSON string and validate the structure
+                const parsedAttrs = JSON.parse(stringValue.replace(/\n/g, '')) as Partial<DressAttributes>;
+                const requiredAttrs = [
+                  'fabric', 'length', 'primary_colour', 'primary_shades',
+                  'pattern', 'neck', 'occasion', 'print', 'shape',
+                  'sleeve_length', 'sleeve_styling'
+                ];
+                
+                // Validate all required fields are present
+                const missingAttrs = requiredAttrs.filter(attr => !(attr in parsedAttrs));
+                if (missingAttrs.length > 0) {
+                  throw new Error(`Missing dress attributes: ${missingAttrs.join(', ')}`);
+                }
+
+                // Convert single values to arrays where needed
+                const arrayFields = ['fabric', 'primary_colour', 'pattern', 'neck', 'occasion', 'print', 'shape'];
+                arrayFields.forEach(field => {
+                  const value = parsedAttrs[field as keyof DressAttributes];
+                  if (value && !Array.isArray(value)) {
+                    (parsedAttrs[field as keyof DressAttributes] as any) = [value];
+                  }
+                });
+                
+                // Ensure primary_shades is always an array
+                if (!Array.isArray(parsedAttrs.primary_shades)) {
+                  parsedAttrs.primary_shades = parsedAttrs.primary_shades ? [parsedAttrs.primary_shades as string] : [];
+                }
+                
+                // Validate string fields
+                if (typeof parsedAttrs.length !== 'string') {
+                  throw new Error('Length must be a string');
+                }
+                if (typeof parsedAttrs.sleeve_length !== 'string') {
+                  throw new Error('Sleeve length must be a string');
+                }
+                if (typeof parsedAttrs.sleeve_styling !== 'string') {
+                  throw new Error('Sleeve styling must be a string');
+                }
+
+                value = parsedAttrs as DressAttributes;
+              } catch (error) {
+                const err = error as Error;
+                throw new Error(`Invalid dress attributes JSON at row ${i + 1}: ${err.message}`);
+              }
+            }
+
+            // Convert numeric values
+            if (header === 'price' || header === 'stock') {
+              const num = Number(value);
+              if (isNaN(num)) {
+                throw new Error(`Invalid number in ${header} at row ${i + 1}`);
+              }
+              value = num;
+            }
+
+            if (header) {
+              item[header] = value;
+            }
+          });
+
+          items.push(item);
+        }
+
+        // Process items
+        for (const item of items) {
+          if (!item.name || !item.price || !item.stock) {
+            throw new Error('Missing required fields: name, price, stock');
+          }
+
+          // Check if item with same name exists
+          const { data: existingItems, error: searchError } = await supabase
+            .from('inventory_items')
+            .select('id')
+            .eq('name', item.name)
+            .maybeSingle();
+
+          if (searchError) throw searchError;
+
+          const dbItem: DBInventoryItem = {
+            name: item.name || '',
+            description: item.description || '',
+            price: item.price || 0,
+            stock: item.stock || 0,
+            image_url: item.image_url || '',
+            image_url_2: item.image_url_2 || null,
+            image_url_3: item.image_url_3 || null,
+            brand_name: item.brand_name || null,
+            sizes: item.sizes || [],
+            body_shapes: item.body_shapes || [],
+            color_tones: item.color_tones || [],
+            dress_type: item.dress_type || []
+          };
+
+          let inventoryItem;
+
+          if (existingItems) {
+            // Update existing item
+            const { data: updatedItem, error: updateError } = await supabase
+              .from('inventory_items')
+              .update(dbItem)
+              .eq('id', existingItems.id)
+              .select()
+              .single();
+
+            if (updateError) throw updateError;
+            inventoryItem = updatedItem;
+          } else {
+            // Insert new item
+            const { data: newItem, error: insertError } = await supabase
+              .from('inventory_items')
+              .insert([dbItem])
+              .select()
+              .single();
+
+            if (insertError) throw insertError;
+            inventoryItem = newItem;
+          }
+
+          if (!inventoryItem) throw new Error('Failed to insert/update inventory item');
+
+          // Handle dress attributes if provided
+          if (item.dress_attributes) {
+            const dressAttrs = JSON.parse(item.dress_attributes) as DressAttributes;
+            
+            // Check if dress attributes exist for this product
+            const { data: existingAttrs, error: attrSearchError } = await supabase
+              .from('dress_attributes')
+              .select('id')
+              .eq('product_id', inventoryItem.id)
+              .maybeSingle();
+
+            if (attrSearchError) throw attrSearchError;
+
+            if (existingAttrs) {
+              // Update existing attributes
+              const { error: attrUpdateError } = await supabase
+                .from('dress_attributes')
+                .update({
+                  fabric: dressAttrs.fabric,
+                  length: dressAttrs.length,
+                  primary_colour: dressAttrs.primary_colour,
+                  primary_shades: dressAttrs.primary_shades,
+                  pattern: dressAttrs.pattern,
+                  neck: dressAttrs.neck,
+                  occasion: dressAttrs.occasion,
+                  print: dressAttrs.print,
+                  shape: dressAttrs.shape,
+                  sleeve_length: dressAttrs.sleeve_length,
+                  sleeve_styling: dressAttrs.sleeve_styling
+                })
+                .eq('id', existingAttrs.id);
+
+              if (attrUpdateError) throw attrUpdateError;
+            } else {
+              // Insert new attributes
+              const { error: attrInsertError } = await supabase
+                .from('dress_attributes')
+                .insert([{
+                  product_id: inventoryItem.id,
+                  fabric: dressAttrs.fabric,
+                  length: dressAttrs.length,
+                  primary_colour: dressAttrs.primary_colour,
+                  primary_shades: dressAttrs.primary_shades,
+                  pattern: dressAttrs.pattern,
+                  neck: dressAttrs.neck,
+                  occasion: dressAttrs.occasion,
+                  print: dressAttrs.print,
+                  shape: dressAttrs.shape,
+                  sleeve_length: dressAttrs.sleeve_length,
+                  sleeve_styling: dressAttrs.sleeve_styling
+                }]);
+
+              if (attrInsertError) throw attrInsertError;
+            }
+          }
+        }
+
+        await fetchInventory();
       };
 
-      const attributesData = {
-        body_shapes: (formData.get('body_shapes') as string).split(',').map(s => s.trim()),
-        color_tones: (formData.get('color_tones') as string).split(',').map(s => s.trim()),
-        dress_type: formData.get('dress_type'),
-      };
-
-      if (editingItem) {
-        // Update existing item
-        const { error: itemError } = await supabase
-          .from('inventory_items')
-          .update(itemData)
-          .eq('id', editingItem.id);
-
-        if (itemError) throw itemError;
-
-        const { error: attrError } = await supabase
-          .from('item_attributes')
-          .update(attributesData)
-          .eq('item_id', editingItem.id);
-
-        if (attrError) throw attrError;
-      } else {
-        // Create new item
-        const { data: newItem, error: itemError } = await supabase
-          .from('inventory_items')
-          .insert([itemData])
-          .select()
-          .single();
-
-        if (itemError) throw itemError;
-
-        const { error: attrError } = await supabase
-          .from('item_attributes')
-          .insert([{ ...attributesData, item_id: newItem.id }]);
-
-        if (attrError) throw attrError;
-      }
-
-      setShowInventoryForm(false);
-      setEditingItem(null);
-      fetchInventory();
+      reader.readAsText(file);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save item');
+      console.error('Error processing file:', err);
+      setError(err instanceof Error ? err.message : 'Failed to process file');
     }
   };
 
@@ -345,73 +582,111 @@ export function AdminPanel() {
         })
       );
 
+      // Define required fields
+      const requiredFields = ['name', 'description', 'price', 'image_url', 'sizes', 
+                             'body_shapes', 'color_tones', 'dress_type', 'stock', "images 2", "images 3", "brand_name",  'dress_attributes'];
+
       // Validate header row
       const headers = rows[0];
-      const requiredFields = ['name', 'description', 'price', 'image_url', "sizes", 
-                            'body_shapes', 'color_tones', 'dress_type', "stock" ];
-      
       const missingFields = requiredFields.filter(field => !headers.includes(field));
       if (missingFields.length > 0) {
         throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
       }
 
       // Process each row
-      const items: any[] = [];
+      const items: CSVInventoryItem[] = [];
       for (let i = 1; i < rows.length; i++) {
         if (rows[i].length === 1 && !rows[i][0]) continue; // Skip empty rows
         
         const row = rows[i];
-        console.log(row);
-        console.log(row.length);
-        console.log(headers);
-        console.log(headers.length);
         if (row.length !== headers.length) {
           throw new Error(`Invalid number of columns in row ${i + 1}`);
         }
 
-        const item = {};
-        headers.forEach((header, index) => {
-          let value = row[index];
+        const item: CSVInventoryItem = {};
+        headers.forEach((headerOrNull: string | null, index: number) => {
+          const header = headerOrNull || '';
+          const rawValue = row[index];
           
-          // Skip null values for optional fields
-          if (value === null && !requiredFields.includes(header as string)) {
+          // Skip empty values for optional fields
+          if ((!rawValue || rawValue === '') && !requiredFields.includes(header)) {
             return;
           }
 
-          // Special handling for body_shapes, sizes, and color_tones
-          if (header === 'body_shapes' && typeof value === 'string') {
-            // Convert comma-separated list to array, handle spaces properly
-            value = value.split(';').map(shape => shape.trim());
-          }
-          
-          if (header === 'sizes' && typeof value === 'string') {
-            // Handle sizes like "XS,S,M L;XL;XXL"
-            value = value.split(';').map(size => size.trim());
-          }
-          
-          if (header === 'color_tones' && typeof value === 'string') {
-            // Handle color tones like "cool neutral" or "cool warm"
-            value = value.split(';').map(tone => tone.trim());
-          }
+          // Ensure we have a string to work with
+          const stringValue = String(rawValue || '').trim();
+          let value: any = stringValue;
 
-          // Parse other arrays and objects if the value is a string
-          if (typeof value === 'string' && (value.startsWith('[') || value.startsWith('{'))) {
+          // Handle arrays
+          if (['body_shapes', 'sizes', 'color_tones', 'dress_type'].includes(header)) {
+            value = stringValue ? stringValue.split(';').filter(Boolean).map(val => val.trim()) : [];
+          }
+          
+          // Handle dress attributes
+          if (header === 'dress_attributes') {
             try {
-              value = JSON.parse(value);
-            } catch (err) {
-              throw new Error(`Invalid JSON in ${header} at row ${i + 1}`);
+              if (!stringValue) {
+                throw new Error('Dress attributes cannot be empty');
+              }
+              
+              // Parse the JSON string and validate the structure
+              const parsedAttrs = JSON.parse(stringValue.replace(/\n/g, '')) as Partial<DressAttributes>;
+              const requiredAttrs = [
+                'fabric', 'length', 'primary_colour', 'primary_shades',
+                'pattern', 'neck', 'occasion', 'print', 'shape',
+                'sleeve_length', 'sleeve_styling'
+              ];
+              
+              // Validate all required fields are present
+              const missingAttrs = requiredAttrs.filter(attr => !(attr in parsedAttrs));
+              if (missingAttrs.length > 0) {
+                throw new Error(`Missing dress attributes: ${missingAttrs.join(', ')}`);
+              }
+
+              // Convert single values to arrays where needed
+              const arrayFields = ['fabric', 'primary_colour', 'pattern', 'neck', 'occasion', 'print', 'shape'];
+              arrayFields.forEach(field => {
+                const value = parsedAttrs[field as keyof DressAttributes];
+                if (value && !Array.isArray(value)) {
+                  (parsedAttrs[field as keyof DressAttributes] as any) = [value];
+                }
+              });
+              
+              // Ensure primary_shades is always an array
+              if (!Array.isArray(parsedAttrs.primary_shades)) {
+                parsedAttrs.primary_shades = parsedAttrs.primary_shades ? [parsedAttrs.primary_shades as string] : [];
+              }
+              
+              // Validate string fields
+              if (typeof parsedAttrs.length !== 'string') {
+                throw new Error('Length must be a string');
+              }
+              if (typeof parsedAttrs.sleeve_length !== 'string') {
+                throw new Error('Sleeve length must be a string');
+              }
+              if (typeof parsedAttrs.sleeve_styling !== 'string') {
+                throw new Error('Sleeve styling must be a string');
+              }
+
+              value = parsedAttrs as DressAttributes;
+            } catch (error) {
+              const err = error as Error;
+              throw new Error(`Invalid dress attributes JSON at row ${i + 1}: ${err.message}`);
             }
           }
-          
+
           // Convert numeric values
           if (header === 'price' || header === 'stock') {
-            value = Number(value);
-            if (isNaN(value)) {
+            const num = Number(value);
+            if (isNaN(num)) {
               throw new Error(`Invalid number in ${header} at row ${i + 1}`);
             }
+            value = num;
           }
 
-          item[header] = value;
+          if (header) {
+            item[header] = value;
+          }
         });
 
         items.push(item);

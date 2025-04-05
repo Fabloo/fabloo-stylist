@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { ShoppingBag, Check, AlertCircle, Filter, Sparkles, Palette } from 'lucide-react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { ShoppingBag, Check, AlertCircle, Filter, Sparkles, Palette, Share2, Heart } from 'lucide-react';
 import type { BodyShape, SkinTone } from '../types';
 import { getStyleRecommendations } from '../utils/styleRecommendations';
 import { useCartStore } from '../store';
@@ -7,6 +7,7 @@ import { ProductDetail } from '../pages/ProductDetail';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../hooks/useCart';
 import { PieChart, Pie, Cell, Tooltip, TooltipProps } from "recharts";
+import { useWishlist } from '../hooks/useWishlist';
 
 type Props = {
   bodyShape: BodyShape;
@@ -55,7 +56,25 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement | null>(null);
+  const { addToWishlist, refreshWishlist, wishlistItems: currentWishlistItems } = useWishlist();
 
+  // Create a lookup map for wishlist items for efficient checking
+  const wishlistItemMap = useMemo(() => {
+    const map = new Map();
+    if (currentWishlistItems && currentWishlistItems.length > 0) {
+      currentWishlistItems.forEach(item => {
+        if (item.item_id) {
+          map.set(item.item_id, item);
+        }
+      });
+    }
+    return map;
+  }, [currentWishlistItems]);
+
+  // Check if an item is in the wishlist
+  const isInWishlist = useCallback((itemId: string) => {
+    return wishlistItemMap.has(itemId);
+  }, [wishlistItemMap]);
 
   useEffect(() => {
     checkSession();
@@ -135,6 +154,26 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
       setCartSuccess(null);
     } finally {
       setAddingToCart(null);
+    }
+  };
+
+  const handleShare = async (dress: DressItem) => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: dress.name,
+          text: `Check out this ${dress.name} from Fabloo Stylist!`,
+          url: window.location.href
+        });
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        const shareUrl = window.location.href;
+        await navigator.clipboard.writeText(shareUrl);
+        setCartSuccess('Link copied to clipboard!');
+        setTimeout(() => setCartSuccess(null), 2000);
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
     }
   };
 
@@ -256,6 +295,55 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
     );
   }
 
+  const handleWishlist = async (dress: DressItem) => {
+    try {
+      if (!isAuthenticated) {
+        setError('Please sign in to add items to your wishlist');
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
+      // If already in wishlist, show message
+      if (isInWishlist(dress.id)) {
+        setCartSuccess(`"${dress.name}" is already in your wishlist`);
+        setTimeout(() => setCartSuccess(null), 2000);
+        return;
+      }
+
+      // Show loading state for the wishlist action
+      setAddingToCart(`wishlist-${dress.id}`);
+      setError(null);
+      
+      try {
+        await addToWishlist({
+          id: dress.id,
+          name: dress.name,
+          price: dress.price,
+          description: dress.description,
+          image_url: dress.image_url,
+        });
+        
+        // Set success message
+        setCartSuccess(`Added "${dress.name}" to wishlist`);
+      } catch (wishlistError) {
+        if (wishlistError instanceof Error && wishlistError.message.includes('already in wishlist')) {
+          setCartSuccess(`"${dress.name}" is already in your wishlist`);
+        } else {
+          throw wishlistError; // re-throw if it's not an "already in wishlist" error
+        }
+      }
+      
+      // Clear success message after delay
+      setTimeout(() => setCartSuccess(null), 2000);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add to wishlist';
+      setError(errorMessage);
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setAddingToCart(null);
+    }
+  };
+
   return (
     <div className="bg-white w-full h-full relative overflow-hidden">
       <div className="w-full mx-auto mt-8 flex flex-col items-center px-4">
@@ -348,8 +436,36 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                 alt={dress.name}
                   className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-200"
                 />
+
             </div>
             <div className="p-4 flex flex-col flex-grow">
+                <div className="absolute top-0 right-0 p-2">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleShare(dress)}
+                      className="bg-white rounded-full p-1 hover:bg-gray-100 transition-colors duration-200"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleWishlist(dress)}
+                      className={`bg-white rounded-full p-1 hover:bg-gray-100 transition-colors duration-200 ${
+                        addingToCart === `wishlist-${dress.id}` ? 'animate-pulse' : ''
+                      }`}
+                      disabled={addingToCart === `wishlist-${dress.id}`}
+                    >
+                      <Heart 
+                        className={`w-4 h-4 ${
+                          isInWishlist(dress.id) ? 'text-pink-500' : 
+                          addingToCart === `wishlist-${dress.id}` ? 'text-pink-500' : 'text-gray-600'
+                        }`} 
+                        fill={isInWishlist(dress.id) || addingToCart === `wishlist-${dress.id}` ? "#ec4899" : "none"}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="p-2 md:p-4 flex flex-col flex-grow">
                 <h4 className="text-[15px] font-medium text-gray-900 mb-1 line-clamp-2 min-h-[40px]">
                 {dress.name}
               </h4>
