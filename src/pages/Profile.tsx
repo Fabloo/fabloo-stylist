@@ -98,6 +98,12 @@ export function Profile() {
 
   const handleLogout = async () => {
     try {
+      // Track Sign out event
+      window.gtag('event', 'Sign out', {
+        'event_category': 'Profile clicked',
+        'event_label': 'Sign out'
+      });
+
       setOrdersLoading(true);
       setError(null);
       await logout();
@@ -112,6 +118,12 @@ export function Profile() {
 
   const resetProfileAnalysis = async () => {
     try {
+      // Track Retake event
+      window.gtag('event', 'Retake', {
+        'event_category': 'Profile clicked',
+        'event_label': 'Retake'
+      });
+
       // First check if we have a session
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
@@ -146,6 +158,28 @@ export function Profile() {
     }
   };
 
+  const handleOrderClick = (orderId: string) => {
+    // Track Order tracking event
+    window.gtag('event', 'Order tracking', {
+      'event_category': 'Profile clicked',
+      'event_label': 'Order tracking'
+    });
+    
+    setSelectedOrder(orderId);
+  };
+
+  const handleRecommendationsClick = () => {
+    // Track Recommendation event
+    window.gtag('event', 'Recommendation', {
+      'event_category': 'Profile clicked',
+      'event_label': 'Recommendation'
+    });
+    
+    navigate('/recommendations');
+  }
+  
+  
+    
   const handleAddressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -393,10 +427,11 @@ export function Profile() {
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-4">Account Settings</h3>
               <button
-                onClick={() => navigate('/recommendations')}
+                onClick={handleRecommendationsClick}
                 className="w-full flex justify-center items-center px-6 py-3 border
                          border-transparent rounded-md shadow-sm text-base font-medium
-                         text-white bg-black hover:bg-indigo-700"
+                         text-white bg-gradient-to-r from-[#B252FF] to-[#F777F7] 
+                         hover:opacity-90 transition-opacity duration-200"
               >
                 View Style Recommendations
               </button>
@@ -423,7 +458,7 @@ export function Profile() {
                 {orders.map((order) => (
                   <button
                     key={order.id}
-                    onClick={() => setSelectedOrder(order.id)}
+                    onClick={() => handleOrderClick(order.id)}
                     className="w-full flex items-center justify-between p-4 bg-gray-50
                              hover:bg-gray-100 rounded-lg transition-colors text-left"
                   >

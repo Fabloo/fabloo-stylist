@@ -9,6 +9,20 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
+type CartItemResponse = {
+  id: string;
+  quantity: number;
+  size_selected: string;
+  inventory_items: {
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+    image_url: string;
+    sizes: string[];
+  };
+};
+
 type CartItem = {
   id: string;
   quantity: number;
@@ -83,9 +97,11 @@ export function Checkout({ onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{
     payment?: string;
     address?: string;
+    terms?: string;
   }>({});
   const [address, setAddress] = useState<ShippingAddress>({
     fullName: '',
@@ -99,6 +115,7 @@ export function Checkout({ onSuccess }: Props) {
   });
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('address');
   const { clearCart: clearCartStore } = useCart();
+
 
   useEffect(() => {
     fetchCartItems();
@@ -134,33 +151,31 @@ export function Checkout({ onSuccess }: Props) {
           description,
           price,
           image_url,
-          stock
+          sizes
         )
       `)
       .eq('user_id', user.id);
-
-      // const { data, error } = await supabase
-      //   .from('cart_items')
-      //   .select(`
-      //     id,
-      //     quantity,
-      //     size_selected,
-      //     inventory_items (
-      //       id,
-      //       name,
-      //       price,
-      //       description,
-      //       image_url,
-      //       sizes,
-      //     )
-      //   `)
-      //   .eq('user_id', user.id);
 
       if (error) {
         throw new Error(`Failed to fetch cart items: ${error.message}`);
       }
 
-      setCartItems(data || []);
+      // Transform the response to match CartItem type
+      const transformedData: CartItem[] = (data as unknown as CartItemResponse[])?.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        size_selected: item.size_selected,
+        inventory_items: {
+          id: item.inventory_items.id,
+          name: item.inventory_items.name,
+          price: item.inventory_items.price,
+          description: item.inventory_items.description,
+          image_url: item.inventory_items.image_url,
+          sizes: item.inventory_items.sizes
+        }
+      })) || [];
+
+      setCartItems(transformedData);
     } catch (err) {
       const errorMessage = err instanceof Error 
         ? err.message 
@@ -178,30 +193,52 @@ export function Checkout({ onSuccess }: Props) {
   };
 
   const validateAddress = () => {
-    const required = ['fullName', 'addressLine1', 'city', 'state', 'pincode', 'phone', 'email'];
-    const missing = required.filter(field => !address[field as keyof ShippingAddress]);
+    const requiredFields = [
+      'fullName',
+      'addressLine1',
+      'city',
+      'state',
+      'pincode',
+      'email',
+      'phone'
+    ] as const;
+
+    const missingFields = requiredFields.filter(field => !address[field] || !address[field].trim());
     
-    if (missing.length > 0) {
-      throw new Error(`Please fill in all required fields: ${missing.join(', ')}`);
+    if (missingFields.length > 0) {
+      throw new Error(`Please fill in all required fields: ${missingFields.map(field => field.replace(/([A-Z])/g, ' $1').toLowerCase()).join(', ')}`);
     }
 
-    if (!/^\d{6}$/.test(address.pincode)) {
-      throw new Error('Please enter a valid 6-digit pincode');
-    }
-
-    if (!/^\d{10}$/.test(address.phone)) {
+    // Validate phone number format
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(address.phone)) {
       throw new Error('Please enter a valid 10-digit phone number');
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address.email)) {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(address.email)) {
       throw new Error('Please enter a valid email address');
+    }
+
+    // Validate pincode format
+    const pincodeRegex = /^\d{6}$/;
+    if (!pincodeRegex.test(address.pincode)) {
+      throw new Error('Please enter a valid 6-digit pincode');
     }
   };
 
+  // Track checkout step changes
+  useEffect(() => {
+    window.gtag('event', 'checkout_step', {
+      event_category: 'Funnel',
+      event_label: currentStep,
+      value: currentStep === 'address' ? 1 : currentStep === 'payment' ? 2 : 3
+    });
+  }, [currentStep]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Reset errors
     setError(null);
     setValidationErrors({});
 
@@ -210,16 +247,21 @@ export function Checkout({ onSuccess }: Props) {
 
       // Check for empty cart first
       if (!cartItems || cartItems.length === 0) {
-        navigate('/cart'); // Redirect to cart page
+        navigate('/cart');
         return;
       }
 
       // Validate payment method
       if (!paymentMethod) {
         setValidationErrors(prev => ({ ...prev, payment: 'Please select a payment method' }));
+        window.gtag('event', 'checkout_error', {
+          event_category: 'Funnel',
+          event_label: 'payment_method_missing'
+        });
         return;
       }
 
+      // Validate address
       try {
         validateAddress();
       } catch (err) {
@@ -227,6 +269,21 @@ export function Checkout({ onSuccess }: Props) {
           ...prev, 
           address: err instanceof Error ? err.message : 'Invalid address'
         }));
+        window.gtag('event', 'checkout_error', {
+          event_category: 'Funnel',
+          event_label: 'address_validation_failed',
+          error_message: err instanceof Error ? err.message : 'Invalid address'
+        });
+        return;
+      }
+
+      // Validate terms acceptance
+      if (!termsAccepted) {
+        setValidationErrors(prev => ({ ...prev, terms: 'Please accept the terms and conditions' }));
+        window.gtag('event', 'checkout_error', {
+          event_category: 'Funnel',
+          event_label: 'terms_not_accepted'
+        });
         return;
       }
 
@@ -299,10 +356,31 @@ export function Checkout({ onSuccess }: Props) {
 
       // Refresh cart items after successful order
       await fetchCartItems();
+
+      // Track successful order placement
+      window.gtag('event', 'purchase', {
+        event_category: 'Funnel',
+        event_label: 'order_placed',
+        transaction_id: order.id,
+        value: totalAmount,
+        items: cartItems.map(item => ({
+          id: item.inventory_items.id,
+          name: item.inventory_items.name,
+          quantity: item.quantity,
+          price: item.inventory_items.price,
+          variant: item.size_selected
+        }))
+      });
+
       // Redirect to success page
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to place order');
+      window.gtag('event', 'checkout_error', {
+        event_category: 'Funnel',
+        event_label: 'order_placement_failed',
+        error_message: err instanceof Error ? err.message : 'Failed to place order'
+      });
       console.error('Checkout error:', err);
     } finally {
       setLoading(false);
@@ -344,18 +422,35 @@ export function Checkout({ onSuccess }: Props) {
       try {
         validateAddress();
         setCurrentStep('payment');
+        window.gtag('event', 'checkout_progress', {
+          event_category: 'Funnel',
+          event_label: 'address_completed'
+        });
       } catch (err) {
         setValidationErrors(prev => ({ 
           ...prev, 
           address: err instanceof Error ? err.message : 'Invalid address'
         }));
+        window.gtag('event', 'checkout_error', {
+          event_category: 'Funnel',
+          event_label: 'address_validation_failed',
+          error_message: err instanceof Error ? err.message : 'Invalid address'
+        });
       }
     } else if (currentStep === 'payment') {
       if (!paymentMethod) {
         setValidationErrors(prev => ({ ...prev, payment: 'Please select a payment method' }));
+        window.gtag('event', 'checkout_error', {
+          event_category: 'Funnel',
+          event_label: 'payment_method_missing'
+        });
         return;
       }
       setCurrentStep('review');
+      window.gtag('event', 'checkout_progress', {
+        event_category: 'Funnel',
+        event_label: 'payment_completed'
+      });
     }
   };
 
@@ -521,11 +616,18 @@ export function Checkout({ onSuccess }: Props) {
                 </select>
               </div>
             </div>
+
+            {validationErrors.address && (
+              <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg text-sm">
+                {validationErrors.address}
+              </div>
+            )}
+
             <div className="mt-6 flex justify-end">
               <button
                 type="button"
                 onClick={nextStep}
-                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-indigo-700"
+                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors duration-200"
               >
                 Continue to Payment
               </button>
@@ -573,14 +675,14 @@ export function Checkout({ onSuccess }: Props) {
               <button
                 type="button"
                 onClick={previousStep}
-                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={nextStep}
-                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-indigo-700"
+                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors duration-200"
               >
                 Continue to Review
               </button>
@@ -651,18 +753,35 @@ export function Checkout({ onSuccess }: Props) {
               </div>
             )}
 
+            <div className="mt-6">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
+                />
+                <span className="text-sm text-gray-600">
+                  I accept the terms and conditions
+                </span>
+              </label>
+              {validationErrors.terms && (
+                <p className="text-sm text-red-600 mt-1">{validationErrors.terms}</p>
+              )}
+            </div>
+
             <div className="mt-6 flex justify-between">
               <button
                 type="button"
                 onClick={previousStep}
-                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={loading || cartItems.length === 0}
-                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors duration-200"
               >
                 {loading ? 'Processing...' : 'Place Order'}
               </button>

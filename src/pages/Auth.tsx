@@ -149,8 +149,8 @@ export function Auth({ onSuccess }: Props) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-black text-white rounded-lg
-                   hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white rounded-lg
+                   hover:opacity-90 transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             'Please wait...'

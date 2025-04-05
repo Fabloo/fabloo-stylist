@@ -6,6 +6,7 @@ import { useCartStore } from '../store';
 import { ProductDetail } from '../pages/ProductDetail';
 import { supabase } from '../lib/supabase';
 import { useCart } from '../hooks/useCart';
+import { PieChart, Pie, Cell, Tooltip, TooltipProps } from "recharts";
 import { useWishlist } from '../hooks/useWishlist';
 
 type Props = {
@@ -22,6 +23,20 @@ type DressItem = {
   stock: number;
   sizes?: string[];
 };
+
+// Define skin tone categories with representative colors and recommended shades
+const skinTones = [
+  { name: "Fair Cool", color: "#F3D9D4", shades: ["#00C2AF", "#B8C9E1", "#5BC2E7", "#6787B7", "#57728B", "#3E6991", "#808286", "#CDB5A7", "#F57EB6", "#AD96DC", "#3A48BA", "#ECB3CB"] },
+  { name: "Fair Warm", color: "#F6CBA6", shades: ["#6DCDB8", "#6CC24A", "#C4D600", "#FEEF00", "#FF8F1C", "#F69F23", "#FDD26E", "#FF2600", "#7421B0", "#3A48BA", "#00A499", "#2DCCD3"] },
+  { name: "Light Cool", color: "#E6B8A2", shades: ["#C26E60", "#C05131", "#DB864E", "#CDA788", "#FAC712", "#FDAA63", "#F5E1A4", "#7C4D3A", "#946037", "#52463F", "#BBC592", "#507F70"] },
+  { name: "Medium Cool", color: "#C48E78", shades: ["#71C5E8", "#06352E", "#00A376", "#FEEF00", "#FAC712", "#F69F23", "#FB6312", "#FF2600", "#93328E", "#7421B0", "#3A48BA", "#00649B"] },
+  { name: "Deep Cool", color: "#8D5D4C", shades: ["#00C2AF", "#003057", "#57728B", "#6787B7", "#57728B", "#007681", "#006F62", "#BCBDBE", "#C4A4A7", "#BF0D3E", "#D2298E", "#7421B0"] },
+  { name: "Medium Warm", color: "#B8764D", shades: ["#00C2AF", "#009775", "#99D6EA", "#808286", "#F8E59A", "#F395C7", "#E3006D", "#CE0037", "#D2298E", "#7421B0", "#3A48BA", "#006FC4"] },
+  { name: "Deep Warm", color: "#6D3B2E", shades: ["#94FFF2", "#00B500", "#A9FF03", "#FFF278", "#F9B087", "#E54520", "#3A1700", "#FB6312", "#D2298E", "#6802C1", "#001ECC", "#006FC4"] },
+  { name: "Neutral Light", color: "#D9A68D", shades: ["#00C2AF", "#009775", "#7FD200", "#F8E59A", "#FEFEFE", "#F395C7", "#FB6312", "#FF2600", "#D2298E", "#963CBD", "#3A48BA", "#0082BA"] },
+  { name: "Neutral Medium", color: "#A46B52", shades: ["#6BCABA", "#00B500", "#7FD200", "#FEEF00", "#B4A91F", "#A07400", "#205C40", "#9D4815", "#946037", "#C4622D", "#F68D2E", "#00778B"] },
+  { name: "Neutral Deep", color: "#714233", shades: ["#00C2AF", "#0E470E", "#9AEA0F", "#FEEF00", "#FFC200", "#F69F23", "#FF592C", "#FF2600", "#CE0037", "#7421B0", "#3A48BA", "#006FC4"] }
+];
 
 export function ShopRecommendations({ bodyShape, skinTone }: Props) {
   const [dresses, setDresses] = useState<DressItem[]>([]);
@@ -63,8 +78,14 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
 
   useEffect(() => {
     checkSession();
-    const recommendations = getStyleRecommendations(bodyShape, skinTone);
-    setColorPalette(recommendations.colors);
+    const selectedSkinTone = skinTones.find((tone) => tone.name === skinTone.name);
+    if (selectedSkinTone) {
+      setColorPalette({
+        primary: selectedSkinTone.shades.slice(0, 4),
+        accent: selectedSkinTone.shades.slice(4, 8),
+        neutral: selectedSkinTone.shades.slice(8, 12)
+      });
+    }
   }, []);
 
   const checkSession = async () => {
@@ -368,86 +389,56 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
 
           {/* Color Palette Section */}
           {(filterType === 'color' || filterType === 'all') && colorPalette && (
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex flex-col gap-1">
-                <div className="text-[#565656] text-[10px] font-normal uppercase leading-[14px] font-poppins text-center">
-                  PRIMARY COLORS
-                </div>
-                <div className="flex gap-2">
-                  {colorPalette.primary.map((color: string, i: number) => (
-                    <div
-                      key={i}
-                      className="w-6 h-6 rounded-full"
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="text-[#565656] text-[10px] font-normal uppercase leading-[14px] font-poppins text-center">
-                  ACCENT COLORS
-                </div>
-                <div className="flex gap-2">
-                  {colorPalette.accent.map((color: string, i: number) => (
-                    <div
-                      key={i}
-                      className="w-6 h-6 rounded-full"
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="text-[#565656] text-[10px] font-normal uppercase leading-[14px] font-poppins text-center">
-                  NEUTRAL COLORS
-                </div>
-                <div className="flex gap-2">
-                  {colorPalette.neutral.map((color: string, i: number) => (
-                    <div
-                      key={i}
-                      className="w-6 h-6 rounded-full"
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
+            <div className="mb-3 overflow-x-auto">
+              <div className="flex gap-3 min-w-max px-2 py-1">
+                {[...colorPalette.primary, ...colorPalette.accent, ...colorPalette.neutral].map((color: string, i: number) => (
+                      <div
+                        key={i}
+                    className="w-8 h-8 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
               </div>
             </div>
           )}
-
+          
           {/* Dress Styles Section */}
           {(filterType === 'style' || filterType === 'all') && (
             <div className="mb-3">
-              <img 
-                src={
-                  bodyShape === 'pear' 
-                    ? 'https://res.cloudinary.com/dofgnvgo6/image/upload/v1738252491/Screenshot_2025-01-30_at_9.24.43_PM_oy2vhp.png'           
-                  : bodyShape === 'inverted-triangle' 
-                    ? 'https://res.cloudinary.com/drvhoqgno/image/upload/v1742304942/Screenshot_2025-03-18_at_7.05.33_PM_jpi0dh.png'
+                <img 
+              src={
+                bodyShape === 'pear' 
+                  ? 'https://res.cloudinary.com/dofgnvgo6/image/upload/v1738252491/Screenshot_2025-01-30_at_9.24.43_PM_oy2vhp.png'           
+                : bodyShape === 'inverted-triangle' 
+                  ? 'https://res.cloudinary.com/drvhoqgno/image/upload/v1742304942/Screenshot_2025-03-18_at_7.05.33_PM_jpi0dh.png'
                   : bodyShape === 'rectangle'
-                    ? 'https://res.cloudinary.com/dofgnvgo6/image/upload/v1738253153/Screenshot_2025-01-30_at_9.35.44_PM_qjvypa.png'
+                  ? 'https://res.cloudinary.com/dofgnvgo6/image/upload/v1738253153/Screenshot_2025-01-30_at_9.35.44_PM_qjvypa.png'
                   : bodyShape === 'apple'
-                    ? 'https://res.cloudinary.com/dofgnvgo6/image/upload/v1738253494/Screenshot_2025-01-30_at_9.41.24_PM_tedlxo.png'
+                  ? 'https://res.cloudinary.com/dofgnvgo6/image/upload/v1738253494/Screenshot_2025-01-30_at_9.41.24_PM_tedlxo.png'
                   : bodyShape === 'hourglass'
-                    ? 'https://res.cloudinary.com/dofgnvgo6/image/upload/v1738253864/Screenshot_2025-01-30_at_9.47.36_PM_jorwsk.png'
+                  ? 'https://res.cloudinary.com/dofgnvgo6/image/upload/v1738253864/Screenshot_2025-01-30_at_9.47.36_PM_jorwsk.png'
                   : ''
-                } 
+              } 
                 alt={`${bodyShape} body shape recommended styles`}
                 className="w-full h-[107px] object-cover rounded-lg"
-              />
-            </div>
+            />
+          </div>
           )}
-        </div>
+      </div>
 
         {/* Product Grid */}
         <div className="grid grid-cols-2 gap-6 mt-4 w-full max-w-3xl">
-          {dresses.slice(0, visibleCount).map((dress) => (
+        {dresses.slice(0, visibleCount).map((dress) => (
             <div key={dress.id} className="group relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-200 flex flex-col">
-              <div className="aspect-[3/4] overflow-hidden relative">
-                <img 
-                  src={dress.image_url}
-                  alt={dress.name}
+            <div className="aspect-[3/4] overflow-hidden relative">
+              <img 
+                src={dress.image_url}
+                alt={dress.name}
                   className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-200"
                 />
+
+            </div>
+            <div className="p-4 flex flex-col flex-grow">
                 <div className="absolute top-0 right-0 p-2">
                   <div className="flex gap-2">
                     <button
@@ -476,21 +467,21 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
               </div>
               <div className="p-2 md:p-4 flex flex-col flex-grow">
                 <h4 className="text-[15px] font-medium text-gray-900 mb-1 line-clamp-2 min-h-[40px]">
-                  {dress.name}
-                </h4>
-                <div className="mt-auto">
-                  <div className="flex justify-between items-center mb-3">
+                {dress.name}
+              </h4>
+              <div className="mt-auto">
+                <div className="flex justify-between items-center mb-3">
                     <p className="text-[15px] font-semibold text-gray-900 tracking-tight">₹{dress.price}</p>
                   </div>
-                  <button
+                      <button
                     onClick={() => {
-                      if (!isAuthenticated) {
-                        setError('Please sign in to continue');
-                        return;
-                      }
-                      setSizeModalOpen(dress.id);
-                    }}
-                    className="w-full py-2.5 bg-black text-white text-sm font-medium rounded-lg hover:bg-black/80 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+                    if (!isAuthenticated) {
+                      setError('Please sign in to continue');
+                      return;
+                    }
+                    setSizeModalOpen(dress.id);
+                  }}
+                    className="w-full py-2.5 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
@@ -498,7 +489,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                       <path d="M16 10a4 4 0 0 1-8 0"></path>
                     </svg>
                     Add to Cart
-                  </button>
+                </button>
                 </div>
               </div>
             </div>
@@ -587,16 +578,19 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                         <div className="flex gap-3 mt-4">
                           <button
                             onClick={() => setSizeModalOpen(null)}
-                            className="flex-1 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium
-                                     rounded-lg hover:bg-gray-50 transition-colors"
+                            className="flex-1 py-2.5 relative text-[#B252FF] hover:text-[#F777F7] text-sm font-medium
+                                     rounded-lg transition-colors duration-200 bg-white
+                                     before:absolute before:inset-0 before:rounded-lg before:p-[1px]
+                                     before:bg-gradient-to-r before:from-[#B252FF] before:to-[#F777F7]
+                                     before:content-[''] before:-z-10"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={() => addToCart(sizeModalOpen)}
                             disabled={!selectedSizes[sizeModalOpen] || addingToCart === sizeModalOpen}
-                            className="flex-1 py-2.5 bg-black text-white text-sm font-medium
-                                     rounded-lg hover:bg-indigo-700 transition-colors
+                            className="flex-1 py-2.5 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-sm font-medium
+                                     rounded-lg hover:opacity-90 transition-opacity duration-200
                                      disabled:opacity-50 disabled:cursor-not-allowed flex items-center
                                      justify-center gap-2"
                           >

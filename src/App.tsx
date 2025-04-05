@@ -15,6 +15,7 @@ import { AdminPanel } from './pages/AdminPanel';
 import type { BodyShape, UserProfile, SkinTone } from './types';
 import { getStyleRecommendations } from './utils/styleRecommendations';
 import { GoogleTagManager } from './components/GoogleTagManager';
+import ColorWheel from './components/ColorWheel';
 import MetaPixel from './components/MetaPexel';
 
 type RecommendationsPageProps = {
@@ -52,7 +53,7 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
         <button
           onClick={() => navigate('/body-shape')}
           className="inline-flex items-center px-6 py-3 bg-black text-white
-                   rounded-lg hover:bg-indigo-700 transition-colors"
+                   rounded-lg hover:bg-gray-800 transition-colors duration-200"
         >
           Start Analysis
         </button>
@@ -90,7 +91,7 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
         <button
           onClick={() => navigate('/body-shape')}
           className="inline-flex items-center px-6 py-3 bg-black text-white
-                   rounded-lg hover:bg-indigo-700 transition-colors"
+                   rounded-lg hover:bg-gray-800 transition-colors duration-200"
         >
           Start Analysis
         </button>
@@ -111,8 +112,8 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
             </div>
             <button
               onClick={() => setIsAuthenticated(true)}
-              className="px-4 py-2 bg-black text-white rounded-lg hover:bg-indigo-700
-                       transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800
+                       transition-colors duration-200 text-sm font-medium"
             >
               Sign In
             </button>
@@ -130,7 +131,7 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
           
           {isAnalysisExpanded && (
             <div className="px-8 pb-6">
-              <div className="space-y-8">
+              <div className="space-y-4">
                 {/* Basic Analysis Results */}
                 <div className="grid grid-cols-2 gap-8">
                   <div className="space-y-3">
@@ -177,11 +178,16 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
                 </div>
                 
                 {/* Description */}
-                <div className="border-t border-b border-gray-100 py-8">
+                <div className="border-t border-b border-gray-100 py-4">
                   <h3 className="text-[#212121] text-xl font-semibold mb-3 font-poppins">Balanced Proportions</h3>
                   <p className="text-[#565656] text-lg leading-[27px] font-poppins">
                     Your shoulders and hips are about the same width with a defined waist.
                   </p>
+                </div>
+
+                {/* Color Wheel */}
+                <div>
+                  <ColorWheel selectedTone={profile.skinTone?.name || 'Fair Cool'} />
                 </div>
                 
                 {/* Style Recommendations */}
@@ -228,7 +234,14 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
           
           <div className="flex justify-center pb-8">
             <button
-              onClick={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
+              onClick={() => {
+                // Track view more/less event
+                window.gtag('event', isAnalysisExpanded ? 'View Less' : 'View More', {
+                  'event_category': 'Analysis Report',
+                  'event_label': isAnalysisExpanded ? 'View Less' : 'View More'
+                });
+                setIsAnalysisExpanded(!isAnalysisExpanded);
+              }}
               className="w-[164px] flex items-center justify-center gap-1.5 px-4 py-3
                        bg-[#BC4BF8] hover:bg-[#A43DE0] text-white rounded-[100px] transition-colors"
             >
@@ -314,12 +327,12 @@ function LandingPage() {
 
         {/* Styles Card - Horizontal */}
         <div className="w-full h-[160px] bg-gradient-to-tr from-[rgba(225,187,255,0.25)] to-[rgba(255,226,255,0.25)] rounded-[16px] border border-[#EAEAEA] shadow-[4px_4px_8px_rgba(0,0,0,0.05)] relative overflow-hidden">
-          <div className="absolute left-6 top-1/2 -translate-y-1/2 w-[120px]">
-            <div className="text-[#212121] text-[18px] font-medium font-poppins">
-              Styles That Flatters On You
+          <div className="absolute left-6 top-[50%] -translate-y-1/2">
+            <div className="text-[#212121] text-[18px] font-medium font-poppins max-w-[140px] leading-[22px]">
+              Styles That<br />Flatters On You
             </div>
           </div>
-          <div className="absolute right-8 top-1/2 -translate-y-1/2 w-[160px] flex justify-center">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 w-[160px] flex justify-center ml-12">
             <img
               src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742970214/Marianne_Jones_Body_Shape_For_Dresses_6_2048x2048_2_ahcorn.png"
               alt="Style"
