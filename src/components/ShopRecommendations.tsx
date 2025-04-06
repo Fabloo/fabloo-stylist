@@ -433,11 +433,12 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
         <div className="grid grid-cols-2 gap-2 sm:gap-6 mt-4 w-full max-w-3xl px-2 sm:px-0">
         {dresses.slice(0, visibleCount).map((dress) => (
             <div key={dress.id} className="group relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-200 flex flex-col">
-            <div className="aspect-[3/4] overflow-hidden relative">
+            <div className="aspect-[3/4] overflow-hidden relative" style={{ minHeight: '200px' }}>
               <img 
                 src={dress.image_url}
                 alt={dress.name}
                 className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-200"
+                style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%' }}
               />
               <div className="absolute top-2 right-2 flex gap-1.5">
                 <button
@@ -533,11 +534,12 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                   <>
                     {/* Responsive layout for the modal */}
                     <div className="flex flex-col sm:flex-row">
-                      <div className="w-full sm:w-1/3 ">
+                      <div className="w-full sm:w-1/3 relative" style={{ minHeight: '200px' }}>
                         <img 
                           src={selectedDress.image_url} 
                           alt={selectedDress.name}
-                          className="h-64 sm:h-full w-full md:object-cover object-contain object-center"
+                          className="h-64 sm:h-full w-full object-contain sm:object-cover"
+                          style={{ maxHeight: '300px' }}
                         />
                       </div>
                       
