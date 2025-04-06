@@ -239,6 +239,7 @@ export const useWishlist = () => {
         };
         
         setWishlistItems(prev => [...prev, newItem]);
+        await fetchWishlistItems();
       } else {
         // If we don't have complete data, fetch everything
         await fetchWishlistItems();
@@ -312,10 +313,14 @@ export const useWishlist = () => {
     }
   };
 
+  const totalWishlistItems = wishlistItems.length;
+  
+
   return { 
     wishlistItems, 
     loading, 
     error, 
+    totalWishlistItems,
     addToWishlist, 
     removeFromWishlist, 
     clearWishlist,

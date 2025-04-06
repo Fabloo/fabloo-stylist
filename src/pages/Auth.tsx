@@ -133,6 +133,7 @@ export function Auth({ onSuccess }: Props) {
               type="text"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
+              maxLength={6}
               placeholder="Enter 6-digit code"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               required

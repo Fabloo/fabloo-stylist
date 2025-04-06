@@ -7,6 +7,8 @@ import { Checkout } from '../pages/Checkout';
 import { useAuth } from '../hooks/useAuth';
 import { useWishlist } from '../hooks/useWishlist';
 import { supabase } from '../lib/supabase';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -19,8 +21,7 @@ export function Layout({ children }: LayoutProps) {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const { items: cartItems, isLoading, error, removeFromCart, totalItems, totalAmount, fetchCart } = useCart();
   const [localCartItems, setLocalCartItems] = useState(cartItems);
-  const { wishlistItems, removeFromWishlist, loading, error: wishlistError, refreshWishlist } = useWishlist();
-  const [localWishlistItems, setLocalWishlistItems] = useState(wishlistItems);
+  const { wishlistItems, removeFromWishlist, loading, error: wishlistError, refreshWishlist, totalWishlistItems} = useWishlist();
   const { isAuthenticated } = useAuth();
   const [sizeModalOpen, setSizeModalOpen] = useState<string | null>(null);
   const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
@@ -31,11 +32,6 @@ export function Layout({ children }: LayoutProps) {
   useEffect(() => {
     setLocalCartItems(cartItems);
   }, [cartItems]);
-
-  // Update localWishlistItems when wishlistItems change
-  useEffect(() => {
-    setLocalWishlistItems(wishlistItems);
-  }, [wishlistItems]);
 
   // Add animations for opening and closing modals
   const modalAnimation = "transition-transform duration-300 ease-in-out transform";
@@ -51,7 +47,6 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const handleWishlistOpen = async () => {
-    // Refresh wishlist data before opening modal
     await refreshWishlist();
     setIsWishlistOpen(true);
   };
@@ -132,8 +127,10 @@ export function Layout({ children }: LayoutProps) {
     }
   };
 
+
   return (
     <div className="min-h-[60vh] bg-gray-50">
+      <ToastContainer />
       <nav className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -152,10 +149,10 @@ export function Layout({ children }: LayoutProps) {
                 className="p-2 rounded-full hover:bg-gray-100 relative"
               >
                 <Heart className="w-6 h-6 text-gray-600" />
-                {localWishlistItems.length > 0 && (
+                {totalWishlistItems > 0 && (
                   <span className="absolute -top-1 -right-1 bg-pink-400 text-white
                                  text-xs rounded-full w-5 h-5 flex items-center 
-                                 justify-center">{localWishlistItems.length}</span>
+                                 justify-center">{totalWishlistItems}</span>
                 )}
               </button>
             <button 

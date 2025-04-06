@@ -71,6 +71,7 @@ interface DressAttributes {
   shape: string | string[];
   sleeve_length: string;
   sleeve_styling: string;
+  product_id?: string;
 }
 
 interface CSVInventoryItem {
@@ -87,7 +88,7 @@ interface CSVInventoryItem {
   body_shapes?: string[];
   color_tones?: string[];
   dress_type?: string[];
-  dress_attributes?: string;  // JSON string
+  dress_attributes?: string | DressAttributes;  // Can be either string (from CSV) or parsed DressAttributes
 }
 
 interface DBInventoryItem {
@@ -252,7 +253,7 @@ export function AdminPanel() {
                 }
                 
                 // Parse the JSON string and validate the structure
-                const parsedAttrs = JSON.parse(stringValue.replace(/\n/g, '')) as Partial<DressAttributes>;
+                const parsedAttrs = JSON.parse(stringValue.replace(/\n/g, ''));
                 const requiredAttrs = [
                   'fabric', 'length', 'primary_colour', 'primary_shades',
                   'pattern', 'neck', 'occasion', 'print', 'shape',
@@ -268,29 +269,22 @@ export function AdminPanel() {
                 // Convert single values to arrays where needed
                 const arrayFields = ['fabric', 'primary_colour', 'pattern', 'neck', 'occasion', 'print', 'shape'];
                 arrayFields.forEach(field => {
-                  const value = parsedAttrs[field as keyof DressAttributes];
-                  if (value && !Array.isArray(value)) {
-                    (parsedAttrs[field as keyof DressAttributes] as any) = [value];
+                  const fieldValue = parsedAttrs[field];
+                  if (fieldValue && !Array.isArray(fieldValue)) {
+                    parsedAttrs[field] = [fieldValue];
                   }
                 });
                 
                 // Ensure primary_shades is always an array
                 if (!Array.isArray(parsedAttrs.primary_shades)) {
-                  parsedAttrs.primary_shades = parsedAttrs.primary_shades ? [parsedAttrs.primary_shades as string] : [];
+                  parsedAttrs.primary_shades = parsedAttrs.primary_shades ? [parsedAttrs.primary_shades] : [];
                 }
                 
-                // Validate string fields
-                if (typeof parsedAttrs.length !== 'string') {
-                  throw new Error('Length must be a string');
-                }
-                if (typeof parsedAttrs.sleeve_length !== 'string') {
-                  throw new Error('Sleeve length must be a string');
-                }
-                if (typeof parsedAttrs.sleeve_styling !== 'string') {
-                  throw new Error('Sleeve styling must be a string');
-                }
-
-                value = parsedAttrs as DressAttributes;
+                // Keep the original string value for storage
+                value = stringValue;
+                
+                // Store parsed attributes separately
+                item.parsedDressAttributes = parsedAttrs as DressAttributes;
               } catch (error) {
                 const err = error as Error;
                 throw new Error(`Invalid dress attributes JSON at row ${i + 1}: ${err.message}`);
@@ -372,8 +366,8 @@ export function AdminPanel() {
           if (!inventoryItem) throw new Error('Failed to insert/update inventory item');
 
           // Handle dress attributes if provided
-          if (item.dress_attributes) {
-            const dressAttrs = JSON.parse(item.dress_attributes) as DressAttributes;
+          if (item.parsedDressAttributes) {
+            const dressAttrs = item.parsedDressAttributes as DressAttributes;
             
             // Check if dress attributes exist for this product
             const { data: existingAttrs, error: attrSearchError } = await supabase
@@ -573,18 +567,20 @@ export function AdminPanel() {
 
     try {
       const text = await file.text();
-      const rows = text.split('\n').map(row => 
-        row.split(',').map(cell => {
+      const rows = text.split('\n').map(row => {
+        // Split by comma but preserve commas within quotes
+        const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+        return matches.map(cell => {
           // Remove quotes and trim
           cell = cell.trim().replace(/^"|"$/g, '');
           // Handle empty cells
           return cell === '' ? null : cell;
-        })
-      );
+        });
+      });
 
       // Define required fields
       const requiredFields = ['name', 'description', 'price', 'image_url', 'sizes', 
-                             'body_shapes', 'color_tones', 'dress_type', 'stock', "images 2", "images 3", "brand_name",  'dress_attributes'];
+                             'body_shapes', 'color_tones', 'dress_type', 'stock', 'brand_name', 'dress_attributes'];
 
       // Validate header row
       const headers = rows[0];
@@ -604,33 +600,41 @@ export function AdminPanel() {
         }
 
         const item: CSVInventoryItem = {};
-        headers.forEach((headerOrNull: string | null, index: number) => {
-          const header = headerOrNull || '';
-          const rawValue = row[index];
+        headers.forEach((header: string | null, index: number) => {
+          if (!header) return;
           
-          // Skip empty values for optional fields
-          if ((!rawValue || rawValue === '') && !requiredFields.includes(header)) {
-            return;
+          const rawValue = row[index];
+          if (!rawValue && requiredFields.includes(header)) {
+            throw new Error(`Missing required value for ${header} at row ${i + 1}`);
           }
 
           // Ensure we have a string to work with
           const stringValue = String(rawValue || '').trim();
           let value: any = stringValue;
 
+          // Handle image URLs
+          if (header === 'image_url') {
+            // Split image URLs by semicolon and get the first one as main image
+            const imageUrls = stringValue.split(';').map(url => url.trim()).filter(Boolean);
+            value = imageUrls[0] || '';
+            if (imageUrls[1]) item['image_url_2'] = imageUrls[1];
+            if (imageUrls[2]) item['image_url_3'] = imageUrls[2];
+          }
+          
           // Handle arrays
-          if (['body_shapes', 'sizes', 'color_tones', 'dress_type'].includes(header)) {
+          else if (['body_shapes', 'sizes', 'color_tones', 'dress_type'].includes(header)) {
             value = stringValue ? stringValue.split(';').filter(Boolean).map(val => val.trim()) : [];
           }
           
           // Handle dress attributes
-          if (header === 'dress_attributes') {
+          else if (header === 'dress_attributes') {
             try {
               if (!stringValue) {
                 throw new Error('Dress attributes cannot be empty');
               }
               
               // Parse the JSON string and validate the structure
-              const parsedAttrs = JSON.parse(stringValue.replace(/\n/g, '')) as Partial<DressAttributes>;
+              const parsedAttrs = JSON.parse(stringValue.replace(/\n/g, ''));
               const requiredAttrs = [
                 'fabric', 'length', 'primary_colour', 'primary_shades',
                 'pattern', 'neck', 'occasion', 'print', 'shape',
@@ -646,37 +650,30 @@ export function AdminPanel() {
               // Convert single values to arrays where needed
               const arrayFields = ['fabric', 'primary_colour', 'pattern', 'neck', 'occasion', 'print', 'shape'];
               arrayFields.forEach(field => {
-                const value = parsedAttrs[field as keyof DressAttributes];
-                if (value && !Array.isArray(value)) {
-                  (parsedAttrs[field as keyof DressAttributes] as any) = [value];
+                const fieldValue = parsedAttrs[field];
+                if (fieldValue && !Array.isArray(fieldValue)) {
+                  parsedAttrs[field] = [fieldValue];
                 }
               });
               
               // Ensure primary_shades is always an array
               if (!Array.isArray(parsedAttrs.primary_shades)) {
-                parsedAttrs.primary_shades = parsedAttrs.primary_shades ? [parsedAttrs.primary_shades as string] : [];
+                parsedAttrs.primary_shades = parsedAttrs.primary_shades ? [parsedAttrs.primary_shades] : [];
               }
               
-              // Validate string fields
-              if (typeof parsedAttrs.length !== 'string') {
-                throw new Error('Length must be a string');
-              }
-              if (typeof parsedAttrs.sleeve_length !== 'string') {
-                throw new Error('Sleeve length must be a string');
-              }
-              if (typeof parsedAttrs.sleeve_styling !== 'string') {
-                throw new Error('Sleeve styling must be a string');
-              }
-
-              value = parsedAttrs as DressAttributes;
+              // Keep the original string value for storage
+              value = stringValue;
+              
+              // Store parsed attributes separately
+              item.parsedDressAttributes = parsedAttrs as DressAttributes;
             } catch (error) {
               const err = error as Error;
               throw new Error(`Invalid dress attributes JSON at row ${i + 1}: ${err.message}`);
             }
           }
-
+          
           // Convert numeric values
-          if (header === 'price' || header === 'stock') {
+          else if (header === 'price' || header === 'stock') {
             const num = Number(value);
             if (isNaN(num)) {
               throw new Error(`Invalid number in ${header} at row ${i + 1}`);
@@ -684,9 +681,7 @@ export function AdminPanel() {
             value = num;
           }
 
-          if (header) {
-            item[header] = value;
-          }
+          item[header] = value;
         });
 
         items.push(item);
@@ -694,7 +689,7 @@ export function AdminPanel() {
 
       // Insert or update items in the database
       for (const item of items) {
-        const { body_shapes, color_tones, dress_type, ...inventoryItem } = item;
+        const { parsedDressAttributes, dress_attributes, body_shapes, color_tones, dress_type, ...inventoryItem } = item;
 
         // Check if the item already exists
         const { data: existingItem, error: fetchError } = await supabase
@@ -707,6 +702,8 @@ export function AdminPanel() {
           throw fetchError;
         }
 
+        let itemId: string;
+
         if (existingItem) {
           // Update existing item
           const { error: itemError } = await supabase
@@ -715,13 +712,40 @@ export function AdminPanel() {
             .eq('id', existingItem.id);
 
           if (itemError) throw itemError;
+          itemId = existingItem.id;
 
+          // Update item attributes
           const { error: attrError } = await supabase
             .from('item_attributes')
             .update({ body_shapes, color_tones, dress_type })
             .eq('item_id', existingItem.id);
 
           if (attrError) throw attrError;
+
+          // Update dress attributes
+          if (parsedDressAttributes) {
+            const dressAttrPayload: DressAttributes = {
+              product_id: itemId,
+              fabric: parsedDressAttributes.fabric,
+              length: parsedDressAttributes.length,
+              primary_colour: parsedDressAttributes.primary_colour,
+              primary_shades: parsedDressAttributes.primary_shades,
+              pattern: parsedDressAttributes.pattern,
+              neck: parsedDressAttributes.neck,
+              occasion: parsedDressAttributes.occasion,
+              print: parsedDressAttributes.print,
+              shape: parsedDressAttributes.shape,
+              sleeve_length: parsedDressAttributes.sleeve_length,
+              sleeve_styling: parsedDressAttributes.sleeve_styling
+            };
+            
+            const { error: dressAttrError } = await supabase
+              .from('dress_attributes')
+              .update(dressAttrPayload)
+              .eq('product_id', itemId);
+
+            if (dressAttrError) throw dressAttrError;
+          }
         } else {
           // Insert new item
           const { data: newItem, error: itemError } = await supabase
@@ -731,12 +755,39 @@ export function AdminPanel() {
             .single();
 
           if (itemError) throw itemError;
+          if (!newItem) throw new Error('Failed to insert inventory item');
+          itemId = newItem.id;
 
+          // Insert item attributes
           const { error: attrError } = await supabase
             .from('item_attributes')
-            .insert([{ item_id: newItem.id, body_shapes, color_tones, dress_type }]);
+            .insert([{ item_id: itemId, body_shapes, color_tones, dress_type }]);
 
           if (attrError) throw attrError;
+
+          // Insert dress attributes
+          if (parsedDressAttributes) {
+            const dressAttrPayload: DressAttributes = {
+              product_id: itemId,
+              fabric: parsedDressAttributes.fabric,
+              length: parsedDressAttributes.length,
+              primary_colour: parsedDressAttributes.primary_colour,
+              primary_shades: parsedDressAttributes.primary_shades,
+              pattern: parsedDressAttributes.pattern,
+              neck: parsedDressAttributes.neck,
+              occasion: parsedDressAttributes.occasion,
+              print: parsedDressAttributes.print,
+              shape: parsedDressAttributes.shape,
+              sleeve_length: parsedDressAttributes.sleeve_length,
+              sleeve_styling: parsedDressAttributes.sleeve_styling
+            };
+            
+            const { error: dressAttrError } = await supabase
+              .from('dress_attributes')
+              .insert([dressAttrPayload]);
+
+            if (dressAttrError) throw dressAttrError;
+          }
         }
       }
 

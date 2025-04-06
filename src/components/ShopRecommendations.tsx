@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase';
 import { useCart } from '../hooks/useCart';
 import { PieChart, Pie, Cell, Tooltip, TooltipProps } from "recharts";
 import { useWishlist } from '../hooks/useWishlist';
-
+import { toast } from 'react-toastify';
 type Props = {
   bodyShape: BodyShape;
   skinTone: SkinTone;
@@ -57,7 +57,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement | null>(null);
   const { addToWishlist, refreshWishlist, wishlistItems: currentWishlistItems } = useWishlist();
-
+  
   // Create a lookup map for wishlist items for efficient checking
   const wishlistItemMap = useMemo(() => {
     const map = new Map();
@@ -323,8 +323,11 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
           image_url: dress.image_url,
         });
         
+        // Refresh wishlist data to ensure UI is up to date
+        await refreshWishlist();
+        
         // Set success message
-        setCartSuccess(`Added "${dress.name}" to wishlist`);
+        toast.success(`Added "${dress.name}" to wishlist`);
       } catch (wishlistError) {
         if (wishlistError instanceof Error && wishlistError.message.includes('already in wishlist')) {
           setCartSuccess(`"${dress.name}" is already in your wishlist`);
@@ -427,69 +430,64 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
       </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-2 gap-6 mt-4 w-full max-w-3xl">
+        <div className="grid grid-cols-2 gap-2 sm:gap-6 mt-4 w-full max-w-3xl px-2 sm:px-0">
         {dresses.slice(0, visibleCount).map((dress) => (
             <div key={dress.id} className="group relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-200 flex flex-col">
             <div className="aspect-[3/4] overflow-hidden relative">
               <img 
                 src={dress.image_url}
                 alt={dress.name}
-                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-200"
-                />
-
-            </div>
-            <div className="p-4 flex flex-col flex-grow">
-                <div className="absolute top-0 right-0 p-2">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleShare(dress)}
-                      className="bg-white rounded-full p-1 hover:bg-gray-100 transition-colors duration-200"
-                    >
-                      <Share2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleWishlist(dress)}
-                      className={`bg-white rounded-full p-1 hover:bg-gray-100 transition-colors duration-200 ${
-                        addingToCart === `wishlist-${dress.id}` ? 'animate-pulse' : ''
-                      }`}
-                      disabled={addingToCart === `wishlist-${dress.id}`}
-                    >
-                      <Heart 
-                        className={`w-4 h-4 ${
-                          isInWishlist(dress.id) ? 'text-pink-500' : 
-                          addingToCart === `wishlist-${dress.id}` ? 'text-pink-500' : 'text-gray-600'
-                        }`} 
-                        fill={isInWishlist(dress.id) || addingToCart === `wishlist-${dress.id}` ? "#ec4899" : "none"}
-                      />
-                    </button>
-                  </div>
-                </div>
+                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-200"
+              />
+              <div className="absolute top-2 right-2 flex gap-1.5">
+                <button
+                  onClick={() => handleShare(dress)}
+                  className="bg-white/90 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-colors duration-200 shadow-sm"
+                >
+                  <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </button>
+                <button
+                  onClick={() => handleWishlist(dress)}
+                  className={`bg-white/90 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-colors duration-200 shadow-sm ${
+                    addingToCart === `wishlist-${dress.id}` ? 'animate-pulse' : ''
+                  }`}
+                  disabled={addingToCart === `wishlist-${dress.id}`}
+                >
+                  <Heart 
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
+                      isInWishlist(dress.id) ? 'text-pink-500' : 
+                      addingToCart === `wishlist-${dress.id}` ? 'text-pink-500' : 'text-gray-600'
+                    }`} 
+                    fill={isInWishlist(dress.id) || addingToCart === `wishlist-${dress.id}` ? "#ec4899" : "none"}
+                  />
+                </button>
               </div>
-              <div className="p-2 md:p-4 flex flex-col flex-grow">
-                <h4 className="text-[15px] font-medium text-gray-900 mb-1 line-clamp-2 min-h-[40px]">
-                {dress.name}
-              </h4>
-              <div className="mt-auto">
-                <div className="flex justify-between items-center mb-3">
-                    <p className="text-[15px] font-semibold text-gray-900 tracking-tight">₹{dress.price}</p>
+            </div>
+              <div className="p-2 sm:p-3 flex flex-col flex-grow">
+                <h4 className="text-[13px] sm:text-[15px] font-medium text-gray-900 mb-1 line-clamp-2 min-h-[32px] sm:min-h-[40px]">
+                  {dress.name}
+                </h4>
+                <div className="mt-auto">
+                  <div className="flex justify-between items-center mb-2 sm:mb-3">
+                    <p className="text-[13px] sm:text-[15px] font-semibold text-gray-900 tracking-tight">₹{dress.price}</p>
                   </div>
-                      <button
+                  <button
                     onClick={() => {
-                    if (!isAuthenticated) {
-                      setError('Please sign in to continue');
-                      return;
-                    }
-                    setSizeModalOpen(dress.id);
-                  }}
-                    className="w-full py-2.5 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+                      if (!isAuthenticated) {
+                        setError('Please sign in to continue');
+                        return;
+                      }
+                      setSizeModalOpen(dress.id);
+                    }}
+                    className="w-full py-2 sm:py-2.5 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-xs sm:text-sm font-medium rounded-lg hover:opacity-90 transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 sm:w-4 sm:h-4">
                       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
                       <path d="M3 6h18"></path>
                       <path d="M16 10a4 4 0 0 1-8 0"></path>
                     </svg>
                     Add to Cart
-                </button>
+                  </button>
                 </div>
               </div>
             </div>
