@@ -110,6 +110,8 @@ interface DBInventoryItem {
 
 export function AdminPanel() {
   const { isAdmin, user } = useAuthStore();
+  console.log("user", user);
+  console.log("isAdmin", isAdmin);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'orders' | 'returns' | 'inventory'>('orders');
   const [orders, setOrders] = useState<Order[]>([]);

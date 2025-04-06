@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { CreditCard, Truck, MapPin, Phone, Mail, User, HashIcon as CashIcon } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
+import { useProfile } from '../hooks/useProfile';
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -98,6 +99,7 @@ export function Checkout({ onSuccess }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const { profile } = useProfile();
   const [validationErrors, setValidationErrors] = useState<{
     payment?: string;
     address?: string;
@@ -105,17 +107,30 @@ export function Checkout({ onSuccess }: Props) {
   }>({});
   const [address, setAddress] = useState<ShippingAddress>({
     fullName: '',
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    pincode: '',
+    addressLine1: profile?.address_line1 || '',
+    addressLine2: profile?.address_line2 || '',
+    city: profile?.city || '',
+    state: profile?.state || '',
+    pincode: profile?.pincode || '',
     phone: '',
     email: ''
   });
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('address');
   const { clearCart: clearCartStore } = useCart();
 
+  // Pre-fill address when profile loads or changes
+  useEffect(() => {
+    if (profile) {
+      setAddress(prev => ({
+        ...prev,
+        addressLine1: profile.address_line1 || prev.addressLine1,
+        addressLine2: profile.address_line2 || prev.addressLine2,
+        city: profile.city || prev.city,
+        state: profile.state || prev.state,
+        pincode: profile.pincode || prev.pincode,
+      }));
+    }
+  }, [profile]);
 
   useEffect(() => {
     fetchCartItems();
@@ -290,6 +305,24 @@ export function Checkout({ onSuccess }: Props) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
         throw new Error('Please sign in to continue');
+      }
+
+      // Save address to user profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          address_line1: address.addressLine1,
+          address_line2: address.addressLine2,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', session.user.id);
+
+      if (profileError) {
+        console.error('Error saving address to profile:', profileError);
+        // Don't throw error, continue with order
       }
 
       // Calculate total amount

@@ -15,6 +15,8 @@ export async function updateUserRole(userId: string, newRole: string) {
       },
     }
   )
+  console.log("data", data);
+  console.log("error", error);
 
   if (error) {
     console.error('Error updating user metadata:', error)
