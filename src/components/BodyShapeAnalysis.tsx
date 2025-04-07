@@ -195,8 +195,8 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
   if (!method) {
     return (
       <div className="max-w-2xl mx-auto text-center mt-10 pb-32">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Body Shape Analysis</h2>
-        <p className="text-lg text-gray-600 mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Body Shape Analysis</h2>
+        <p className="text-lg text-gray-600 mb-4">
           Let's start by analyzing your body shape. Choose your preferred method.
         </p>
         
@@ -204,7 +204,7 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
         <img 
           src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742291530/Frame_1000003512_kf4boz.png"
           alt="Clothing examples"
-          className="w-[200px] mx-auto mb-4"
+          className="w-[180px] mx-auto mb-4"
         />
 
         {/* Upload Photo button moved below image */}

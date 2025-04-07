@@ -171,7 +171,7 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
 
         {/* Question */}
         <div className="mb-6">
-          <h2 className="text-[28px] leading-[36px] font-medium text-[#1A1A1A] mb-6">
+          <h2 className="text-[20px] leading-[36px] font-medium text-[#1A1A1A] mb-6">
             {QUIZ_QUESTIONS[currentQuestion].question.split(' ').map((word, i) => (
               word.toLowerCase() === 'veins' ? 
                 <span key={i} className="font-bold">{word} </span> : 

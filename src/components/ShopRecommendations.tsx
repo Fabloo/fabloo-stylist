@@ -38,6 +38,7 @@ const skinTones = [
   { name: "Neutral Deep", color: "#714233", shades: ["#00C2AF", "#0E470E", "#9AEA0F", "#FEEF00", "#FFC200", "#F69F23", "#FF592C", "#FF2600", "#CE0037", "#7421B0", "#3A48BA", "#006FC4"] }
 ];
 
+
 export function ShopRecommendations({ bodyShape, skinTone }: Props) {
   const [dresses, setDresses] = useState<DressItem[]>([]);
   const [loading, setLoading] = useState(true);
