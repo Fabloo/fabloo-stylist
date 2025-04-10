@@ -8,7 +8,7 @@ import { analyzeBodyShape } from '../utils/bodyShapeAnalysis';
 const QUIZ_QUESTIONS = [
   {
     id: 'shoulders',
-    question: 'What best describes your shoulders?',
+    question: 'What best describes your ?',
     options: [
       { id: 'broader', text: 'Broader than my hips', points: { 'inverted-triangle': 2, 'rectangle': 1 } },
       { id: 'same', text: 'About the same as my hips', points: { 'rectangle': 2, 'hourglass': 1 } },
