@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate} from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ChevronDown } from 'lucide-react';
-import { BodyShapeAnalysis } from './components/BodyShapeAnalysis';
+import BodyShapeQuiz from './components/BodyShapeQuiz';
 import { SkinToneAnalysis } from './components/SkinToneAnalysis';
 import { Auth } from './pages/Auth';
 import { Profile } from './pages/Profile';
@@ -389,7 +389,7 @@ function App() {
           <Route
             path="/body-shape"
             element={
-              <BodyShapeAnalysis 
+              <BodyShapeQuiz
                 onComplete={handleBodyShapeComplete} 
                 currentShape={analysisResults.bodyShape}
               />

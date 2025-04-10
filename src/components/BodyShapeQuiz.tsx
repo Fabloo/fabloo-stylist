@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import type { BodyShape } from '../types';
+import { useProfile } from '../hooks/useProfile';
 
 // Body shape determination logic
 function getBodyShape(q1: string | null, q2: string | null) {
@@ -16,11 +18,45 @@ function getBodyShape(q1: string | null, q2: string | null) {
   return 'Unknown';
 }
 
-export default function BodyShapeQuiz() {
+type Props = {
+  currentShape?: BodyShape;
+  onComplete: (bodyShape: BodyShape) => void;
+};
+
+export default function BodyShapeQuiz({ currentShape, onComplete }: Props) {
   const [q1, setQ1] = useState<string | null>(null);
   const [q2, setQ2] = useState<string | null>(null);
   const [bodyShape, setBodyShape] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(1);
+  const [showResults, setShowResults] = useState(false);
+  const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
+
+  // Reset if currentShape changes
+  useEffect(() => {
+    if (currentShape) {
+      setBodyShape(currentShape);
+    }
+  }, [currentShape]);
+
+  // Handle redirection after showing results
+  useEffect(() => {
+    if (showResults && bodyShape) {
+      // Set a timer to redirect after showing the results for 3 seconds
+      const timer = window.setTimeout(() => {
+        if (bodyShape && typeof bodyShape === 'string') {
+          onComplete(bodyShape as BodyShape);
+        }
+      }, 3000);
+      
+      setRedirectTimer(timer);
+      
+      return () => {
+        if (redirectTimer) {
+          window.clearTimeout(redirectTimer);
+        }
+      };
+    }
+  }, [showResults, bodyShape, onComplete]);
 
   const handleNext = () => {
     if (currentQuestion === 1 && q1) {
@@ -28,6 +64,7 @@ export default function BodyShapeQuiz() {
     } else if (currentQuestion === 2 && q2) {
       const shape = getBodyShape(q1, q2);
       setBodyShape(shape);
+      setShowResults(true);
     }
   };
 
@@ -162,14 +199,20 @@ export default function BodyShapeQuiz() {
         </div>
       </div>
 
-      {bodyShape && (
+      {showResults && bodyShape && (
         <div className="fixed inset-0 bg-white z-50 p-4">
           <h3 className="text-[32px] font-bold text-center mb-8">
             Your Body Shape is: {bodyShape}
           </h3>
-          {/* Add body shape description and recommendations here */}
+          <p className="text-center text-lg text-gray-600 mb-8">
+            Redirecting to skin tone analysis in a moment...
+          </p>
+          {/* Add a simple loading indicator */}
+          <div className="flex justify-center">
+            <div className="w-8 h-8 border-4 border-gray-300 border-t-purple-500 rounded-full animate-spin"></div>
+          </div>
         </div>
       )}
     </div>
   );
-} 
+}
