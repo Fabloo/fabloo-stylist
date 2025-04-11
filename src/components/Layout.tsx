@@ -139,7 +139,7 @@ export function Layout({ children }: LayoutProps) {
                 <img
       src="https://res.cloudinary.com/dofgnvgo6/image/upload/v1744363320/Union_1_ugzdfs.svg" // Replace with your image URL
      alt="Brand Logo"
-    className="w-32 h-16 object-contain"
+    className="w-32 h-14 object-contain"
     />
               </Link>
             </div>
