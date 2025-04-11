@@ -137,10 +137,10 @@ export function Layout({ children }: LayoutProps) {
             <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="text-xl font-semibold text-gray-900">
                 <img
-      src="https://res.cloudinary.com/dofgnvgo6/image/upload/v1744363320/Union_1_ugzdfs.svg" // Replace with your image URL
-     alt="Brand Logo"
-    className="w-32 h-14 object-contain"
-    />
+                  src="https://res.cloudinary.com/dofgnvgo6/image/upload/v1744363320/Union_1_ugzdfs.svg"
+                  alt="Brand Logo"
+                  className="w-24 h-16 object-contain"
+                />
               </Link>
             </div>
             <div className="flex items-center space-x-4">

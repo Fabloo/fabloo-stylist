@@ -7,30 +7,51 @@ import { analyzeBodyShape } from '../utils/bodyShapeAnalysis';
 
 const QUIZ_QUESTIONS = [
   {
-    id: 'shoulders',
-    question: 'What best describes your shoulders?',
+    id: 'proportions',
+    question: 'Which of these three images most resembles your bust to hip ratio?',
     options: [
-      { id: 'broader', text: 'Broader than my hips', points: { 'inverted-triangle': 2, 'rectangle': 1 } },
-      { id: 'same', text: 'About the same as my hips', points: { 'rectangle': 2, 'hourglass': 1 } },
-      { id: 'narrower', text: 'Narrower than my hips', points: { 'pear': 2, 'hourglass': 1 } }
+      { 
+        id: 'bust-narrow', 
+        text: 'Bust narrower than hips',
+        image: 'https://res.cloudinary.com/drvhoqgno/image/upload/v1744267839/Frame_1000003685_lys4qt.png',
+        points: { 'pear': 2, 'rectangle': 1 }
+      },
+      { 
+        id: 'balanced', 
+        text: 'Bust about the same as hips',
+        image: 'https://res.cloudinary.com/drvhoqgno/image/upload/v1744267887/Frame_1000003690_fjexso.png',
+        points: { 'hourglass': 2, 'rectangle': 1 }
+      },
+      { 
+        id: 'bust-wide', 
+        text: 'Bust wider than hips',
+        image: 'https://res.cloudinary.com/dofgnvgo6/image/upload/v1744371508/Frame_1000003692_mrjmcj.png',
+        points: { 'apple': 2, 'inverted-triangle': 1 }
+      }
     ]
   },
   {
     id: 'waist',
-    question: 'How would you describe your waist?',
+    question: 'Which of these three images most resembles your waist?',
     options: [
-      { id: 'defined', text: 'Clearly defined, much smaller than bust/hips', points: { 'hourglass': 2 } },
-      { id: 'somewhat', text: 'Somewhat defined', points: { 'rectangle': 1, 'pear': 1 } },
-      { id: 'straight', text: 'Not very defined', points: { 'rectangle': 2, 'apple': 1 } }
-    ]
-  },
-  {
-    id: 'hips',
-    question: 'How would you describe your hips?',
-    options: [
-      { id: 'wider', text: 'Wider than my shoulders and bust', points: { 'pear': 2 } },
-      { id: 'balanced', text: 'In proportion with my shoulders', points: { 'hourglass': 2 } },
-      { id: 'narrow', text: 'Narrower than my shoulders', points: { 'inverted-triangle': 2 } }
+      { 
+        id: 'defined', 
+        text: 'Waist significantly smaller',
+        image: 'https://res.cloudinary.com/drvhoqgno/image/upload/v1744268153/Frame_1000003686_1_y6c5sk.png',
+        points: { 'hourglass': 2 }
+      },
+      { 
+        id: 'somewhat', 
+        text: 'Waist similar to bust/hips',
+        image: 'https://res.cloudinary.com/drvhoqgno/image/upload/v1744268226/Frame_1000003685_1_djvosn.png',
+        points: { 'rectangle': 2 }
+      },
+      { 
+        id: 'straight', 
+        text: 'Waist larger',
+        image: 'https://res.cloudinary.com/drvhoqgno/image/upload/v1744268226/Frame_1000003685_1_djvosn.png',
+        points: { 'apple': 2 }
+      }
     ]
   }
 ];
@@ -68,37 +89,31 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
   }, [profile, onComplete]);
 
   const determineBodyShape = (quizAnswers: QuizAnswer[]) => {
-    const scores: Record<BodyShape, number> = {
-      'hourglass': 0,
-      'pear': 0,
-      'rectangle': 0,
-      'inverted-triangle': 0,
-      'apple': 0
-    };
+    const proportions = quizAnswers.find(a => a.questionId === 'proportions')?.optionId;
+    const waist = quizAnswers.find(a => a.questionId === 'waist')?.optionId;
+    
+    if (!proportions || !waist) return 'hourglass'; // Default fallback
 
-    quizAnswers.forEach(answer => {
-      const question = QUIZ_QUESTIONS.find(q => q.id === answer.questionId);
-      const option = question?.options.find(o => o.id === answer.optionId);
-      
-      if (option?.points) {
-        Object.entries(option.points).forEach(([shape, points]) => {
-          scores[shape as BodyShape] += points;
-        });
-      }
-    });
+    // New logic based on the provided rules
+    if (proportions === 'bust-narrow') {
+      if (waist === 'defined') return 'pear';
+      if (waist === 'somewhat') return 'rectangle';
+      return 'apple';
+    }
+    
+    if (proportions === 'balanced') {
+      if (waist === 'defined') return 'hourglass';
+      if (waist === 'somewhat') return 'rectangle';
+      return 'apple';
+    }
+    
+    if (proportions === 'bust-wide') {
+      if (waist === 'defined') return 'apple';
+      if (waist === 'somewhat') return 'rectangle';
+      return 'apple';
+    }
 
-    // Find the body shape with the highest score
-    let maxScore = 0;
-    let result: BodyShape = 'hourglass'; // Default
-
-    Object.entries(scores).forEach(([shape, score]) => {
-      if (score > maxScore) {
-        maxScore = score;
-        result = shape as BodyShape;
-      }
-    });
-
-    return result;
+    return 'hourglass'; // Default fallback
   };
 
   const handleQuizAnswer = (optionId: string) => {
@@ -119,11 +134,12 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
     } else {
       setIsAnalyzing(true);
       const bodyShape = determineBodyShape(newAnswers);
-      console.log(bodyShape);
+      console.log("Body shape determined:", bodyShape);
       updateProfile({
         bodyShape
       });
       setTimeout(() => {
+        console.log("Calling onComplete with bodyShape:", bodyShape);
         onComplete(bodyShape);
         setIsAnalyzing(false);
       }, 1500);
@@ -194,65 +210,65 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
 
   if (!method) {
     return (
-      <div className="max-w-2xl mx-auto text-center mt-10 pb-32">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Body Shape Analysis</h2>
-        <p className="text-lg text-gray-600 mb-4">
-          Let's start by analyzing your body shape. Choose your preferred method.
-        </p>
-        
-        {/* Example image */}
-        <img 
-          src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742291530/Frame_1000003512_kf4boz.png"
-          alt="Clothing examples"
-          className="w-[180px] mx-auto mb-4"
-        />
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
+        <div className="max-w-2xl mx-auto text-center px-4 pt-6 pb-4 flex-1">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Body Shape Analysis</h2>
+          <p className="text-base text-gray-600 mb-4">
+          Choose your method: Take the quiz or upload a photo.
+          </p>
 
-        {/* Upload Photo button moved below image */}
-        <div className="w-[312px] mx-auto">
-          <label className="block">
-            <div className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2 cursor-pointer">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6.66667 6.66667V5C6.66667 3.15905 8.15905 1.66667 10 1.66667C11.841 1.66667 13.3333 3.15905 13.3333 5V6.66667M10 11.6667V13.3333M5 18.3333H15C16.3807 18.3333 17.5 17.214 17.5 15.8333V9.16667C17.5 7.78595 16.3807 6.66667 15 6.66667H5C3.61929 6.66667 2.5 7.78595 2.5 9.16667V15.8333C2.5 17.214 3.61929 18.3333 5 18.3333Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Upload Photo
-            </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </label>
-        </div>
-
-        {error && (
-          <div className="p-4 bg-red-50 text-red-700 rounded-lg mb-8">
-            {error}
-          </div>
-        )}
-
-        {/* Sticky Footer */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
-          <div className="w-[312px] mx-auto space-y-3">
-            {/* Info section with icon and text */}
-            <div className="flex items-center gap-6 p-6 bg-white border border-[#EAEAEA] rounded-[12px]">
+          {/* Quiz section */}
+          <div className="w-full max-w-[312px] mx-auto mb-4">
+            {/* Info section */}
+            <div className="flex items-center gap-4 p-4 bg-white border border-[#EAEAEA] rounded-[12px] mb-4 shadow-sm">
               <img 
                 src="https://res.cloudinary.com/drvhoqgno/image/upload/v1743678198/Screenshot_2025-04-03_at_4.24.26_PM_1_nm9cfe.png"
                 alt="Info"
-                className="w-[64px] h-[64px]"
+                className="w-[56px] h-[56px]"
               />
-              <p className="text-[#1A1A1A] text-[16px] leading-[24px] font-normal flex-1">
+              <p className="text-[#1A1A1A] text-base leading-[22px] font-normal flex-1">
                 Discover your perfect fit! Take our quick body shape quiz now!
               </p>
             </div>
 
             <button
               onClick={handleQuizStart}
-              className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow"
+              className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-lg font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow"
             >
               Take Quiz
             </button>
           </div>
+
+          {/* Example image with adjusted size */}
+          <div className="mb-6">
+            <img 
+              src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742291530/Frame_1000003512_kf4boz.png"
+              alt="Clothing examples"
+              className="w-[200px] mx-auto"
+            />
+          </div>
+
+          {/* Upload Photo button */}
+          <div className="w-full max-w-[312px] mx-auto">
+            <label className="block">
+              <div className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2 cursor-pointer">
+                <Upload className="w-6 h-6" />
+                <span className="text-lg">Upload Photo</span>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-lg mt-4 text-base max-w-[312px] mx-auto">
+              {error}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -260,37 +276,85 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
 
   if (method === 'quiz') {
     return (
-      <div className="max-w-2xl mx-auto text-center mt-10">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Body Shape Quiz</h2>
-        <p className="text-lg text-gray-600 mb-6">
-          Question {currentQuestion + 1} of {QUIZ_QUESTIONS.length}
-        </p>
-        
-        <div className="bg-white p-8 rounded-xl shadow-sm">
-          <div className="text-left">
-            {/* Styles heading with proper spacing */}
-            <div className="flex flex-col mb-8">
-              <h3 className="text-xl font-medium text-gray-900 mb-6">Styles That Flatters On You</h3>
-              <div className="flex justify-center gap-12">
-                <img src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742233399/Screenshot_2025-03-17_at_11.13.13_PM_vcz15d.png" alt="Dress style 1" className="h-24 w-auto" />
-                <img src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742233389/Screenshot_2025-03-17_at_11.13.04_PM_mxk2zf.png" alt="Dress style 2" className="h-24 w-auto" />
-                <img src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742233359/Screenshot_2025-03-17_at_11.12.34_PM_k8vyxe.png" alt="Dress style 3" className="h-24 w-auto" />
-              </div>
-            </div>
+      <div className="min-h-screen bg-white">
+        {/* Header */}
+        <div className="flex items-center px-4 py-3 border-b border-gray-200">
+          <button 
+            onClick={() => setMethod(null)}
+            className="flex items-center text-gray-600"
+          >
+            <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+        </div>
 
-            <h3 className="text-xl font-medium text-gray-900 mb-4">
-              {QUIZ_QUESTIONS[currentQuestion].question}
-            </h3>
-            <div className="space-y-3">
-              {QUIZ_QUESTIONS[currentQuestion].options.map((option) => (
+        {/* Quiz Content */}
+        <div className="px-4 pt-8">
+          <h1 className="text-[40px] font-bold text-black mb-4 text-center">
+            Bodyshape Quiz
+          </h1>
+          <p className="text-lg text-gray-600 mb-8 text-center">
+            Answer a few questions to determine your body shape
+          </p>
+
+          <h2 className="text-2xl text-gray-900 mb-6">
+            {QUIZ_QUESTIONS[currentQuestion].question}
+          </h2>
+
+          <div className="space-y-4 max-w-[312px] mx-auto">
+            {QUIZ_QUESTIONS[currentQuestion].options.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => handleQuizAnswer(option.id)}
+                className="w-full aspect-[2.5/1] bg-[#EFD7EF] rounded-xl border border-[#FFE2E2] hover:border-[#B252FF] transition-colors overflow-hidden relative"
+              >
+                <img 
+                  src={option.image} 
+                  alt={option.text}
+                  className="w-full h-full object-contain"
+                />
+              </button>
+            ))}
+          </div>
+
+          {/* Navigation */}
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+            <div className="max-w-[312px] mx-auto flex items-center justify-between">
+              {currentQuestion > 0 ? (
                 <button
-                  key={option.id}
-                  onClick={() => handleQuizAnswer(option.id)}
-                  className="w-full p-4 text-left rounded-lg border hover:border-indigo-500 hover:bg-indigo-50"
+                  onClick={() => setCurrentQuestion(currentQuestion - 1)}
+                  className="text-gray-600 text-base font-medium"
                 >
-                  {option.text}
+                  Previous
                 </button>
-              ))}
+              ) : (
+                <div className="w-16"></div>
+              )}
+
+              {/* Progress Dots */}
+              <div className="flex gap-1">
+                {QUIZ_QUESTIONS.map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={`h-[3px] w-8 rounded-full ${
+                      idx === currentQuestion ? 'bg-[#B252FF]' : 'bg-[#E5E5E5]'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {currentQuestion < QUIZ_QUESTIONS.length - 1 ? (
+                <button
+                  onClick={() => handleQuizAnswer(QUIZ_QUESTIONS[currentQuestion].options[0].id)}
+                  className="text-base font-medium bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white px-6 py-2 rounded-lg"
+                >
+                  Next
+                </button>
+              ) : (
+                <div className="w-16"></div>
+              )}
             </div>
           </div>
         </div>

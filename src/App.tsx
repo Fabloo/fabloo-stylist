@@ -4,6 +4,8 @@ import { Layout } from './components/Layout';
 import { ChevronDown } from 'lucide-react';
 import { BodyShapeAnalysis } from './components/BodyShapeAnalysis';
 import { SkinToneAnalysis } from './components/SkinToneAnalysis';
+import { SkinToneOptions } from './components/SkinToneOptions';
+import { SkinToneDetector } from './components/SkinToneDetector';
 import { Auth } from './pages/Auth';
 import { Profile } from './pages/Profile';
 import { Checkout } from './pages/Checkout';
@@ -329,7 +331,7 @@ function LandingPage() {
         <div className="w-full h-[160px] bg-gradient-to-tr from-[rgba(225,187,255,0.25)] to-[rgba(255,226,255,0.25)] rounded-[16px] border border-[#EAEAEA] shadow-[4px_4px_8px_rgba(0,0,0,0.05)] relative overflow-hidden">
           <div className="absolute left-6 top-[50%] -translate-y-1/2">
             <div className="text-[#212121] text-[18px] font-medium font-poppins max-w-[140px] leading-[22px]">
-              Styles That<br />Flatters On <br />You
+              Styles That<br />Flatters On You
             </div>
           </div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 w-[160px] flex justify-center ml-12">
@@ -367,11 +369,15 @@ function App() {
 
   const handleBodyShapeComplete = (bodyShape: BodyShape) => {
     setAnalysisResults(prev => ({ ...prev, bodyShape }));
-    navigate('/skin-tone');
+    console.log("Body shape complete, navigating to /skin-tone with state:", { state: { fromBodyShape: true } });
+    navigate('/skin-tone', { state: { fromBodyShape: true } });
   };
 
-
-
+  const handleSkinToneComplete = (results: { skinTone: SkinTone }) => {
+    console.log("Skin tone detection complete, navigating to /auth with results:", results);
+    setAnalysisResults(prev => ({ ...prev, ...results }));
+    navigate('/auth');
+  };
 
   const recommendations = analysisResults.bodyShape && analysisResults.skinTone 
     ? getStyleRecommendations(analysisResults.bodyShape, analysisResults.skinTone)
@@ -386,6 +392,8 @@ function App() {
         <Layout>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          
+          {/* Body Shape Analysis */}
           <Route
             path="/body-shape"
             element={
@@ -395,18 +403,28 @@ function App() {
               />
             }
           />
+          
+          {/* Skin Tone Flow */}
+          <Route path="/skin-tone" element={<SkinToneOptions />} />
           <Route 
-            path="/skin-tone" 
+            path="/skin-tone-quiz" 
             element={
               <SkinToneAnalysis 
                 currentResults={analysisResults}
-                onComplete={(results) => {
-                  setAnalysisResults(prev => ({ ...prev, ...results }));
-                  navigate('/auth');
-                }}
+                onComplete={handleSkinToneComplete}
               />
             }
           />
+          <Route 
+            path="/skin-tone-detector" 
+            element={
+              <SkinToneDetector 
+                onComplete={handleSkinToneComplete}
+              />
+            }
+          />
+          
+          {/* Authentication and Recommendations */}
           <Route
             path="/auth"
             element={
@@ -421,6 +439,8 @@ function App() {
               />
             }
           />
+          
+          {/* Other Routes */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />

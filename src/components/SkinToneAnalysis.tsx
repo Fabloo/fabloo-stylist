@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Upload, ClipboardList } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { SkinToneDetector } from './SkinToneDetector';
@@ -60,10 +60,23 @@ type Props = {
 
 export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile, updateProfile } = useProfile();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<QuizAnswer[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+
+  // Check if we came here directly after body shape (without going through options)
+  // If we did, redirect to the options page first
+  useEffect(() => {
+    // If we don't have the fromOptions flag in state, redirect to options
+    if (!location.state?.fromOptions && currentResults.bodyShape && !redirecting) {
+      console.log("Redirecting to skin tone options first - missing fromOptions state", location.state);
+      setRedirecting(true);
+      navigate('/skin-tone');
+    }
+  }, [location.state, currentResults, navigate, redirecting]);
 
   // If we already have skin tone from profile, use that
   useEffect(() => {
@@ -93,8 +106,18 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
       setIsAnalyzing(true);
       const skinTone = SKIN_TONES.find(tone => tone.id === determineSkinTone(newAnswers));
       if (!skinTone) throw new Error('Failed to determine skin tone');
+      
+      // Track quiz completion
+      if (window.gtag) {
+        window.gtag('event', 'Complete Quiz', {
+          'event_category': 'Skin Tone Analysis',
+          'event_label': skinTone.name
+        });
+      }
+
       // Update profile with skin tone
       updateProfile({ skinTone });
+      
       setTimeout(() => {
         onComplete({ skinTone });
       }, 1500);
@@ -120,13 +143,21 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Add back button */}
+      <button
+        onClick={() => navigate('/skin-tone')}
+        className="absolute top-4 left-4 p-2 text-gray-600 hover:text-gray-900"
+      >
+        ← Back
+      </button>
+
       <div className="flex-1 max-w-md mx-auto w-full px-4 py-6 mb-20">
         {/* Header */}
         <h1 className="text-[32px] leading-[40px] font-bold text-center mb-2">
-          Skin Tone Analysis
+          Skin Tone Quiz
         </h1>
         <p className="text-[16px] leading-[24px] text-[#666666] text-center mb-6">
-          Determine your Clothing Colors by your Color Type
+          Answer a few questions to determine your skin tone
         </p>
 
         {/* Color Wheel Card */}
