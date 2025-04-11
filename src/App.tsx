@@ -281,7 +281,7 @@ function LandingPage() {
       <div className="w-full relative">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-100/50 to-pink-100/50 z-0" />
         <img 
-          src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742925824/Frame_1000003885_beeerj.svg"
+          src="https://res.cloudinary.com/dofgnvgo6/image/upload/v1744395474/Screenshot_2025-04-11_at_11.47.10_PM_ejr2dl.png"
           alt="Fabloo app screenshot"
           className="w-full relative z-10 transform hover:scale-[1.02] transition-transform duration-500"
         />
