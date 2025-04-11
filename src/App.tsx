@@ -329,7 +329,7 @@ function LandingPage() {
         <div className="w-full h-[160px] bg-gradient-to-tr from-[rgba(225,187,255,0.25)] to-[rgba(255,226,255,0.25)] rounded-[16px] border border-[#EAEAEA] shadow-[4px_4px_8px_rgba(0,0,0,0.05)] relative overflow-hidden">
           <div className="absolute left-6 top-[50%] -translate-y-1/2">
             <div className="text-[#212121] text-[18px] font-medium font-poppins max-w-[140px] leading-[22px]">
-              Styles That<br />Flatters On You
+              Styles That<br />Flatters On <br />You
             </div>
           </div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 w-[160px] flex justify-center ml-12">
