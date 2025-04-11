@@ -413,7 +413,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                 <img 
               src={
                 bodyShape === 'pear' 
-                  ? 'https://res.cloudinary.com/dofgnvgo6/image/upload/v1738252491/Screenshot_2025-01-30_at_9.24.43_PM_oy2vhp.png'           
+                  ? 'https://res.cloudinary.com/dofgnvgo6/image/upload/v1744359997/Screenshot_2025-04-11_at_1.56.02_PM_mmuqxr.png'           
                 : bodyShape === 'inverted-triangle' 
                   ? 'https://res.cloudinary.com/drvhoqgno/image/upload/v1742304942/Screenshot_2025-03-18_at_7.05.33_PM_jpi0dh.png'
                   : bodyShape === 'rectangle'
