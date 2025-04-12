@@ -208,229 +208,114 @@ export function AdminPanel() {
   const handleInventorySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const file = formData.get('file') as File;
-
-    if (!file) {
-      setError('Please select a file');
-      return;
-    }
-
+    
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const text = e.target?.result;
-        if (typeof text !== 'string') return;
-
-        const rows = text.split('\n').filter(row => row.trim());
-        const headers = rows[0].split(',').map(h => h.trim());
-        const items: CSVInventoryItem[] = [];
-
-        for (let i = 1; i < rows.length; i++) {
-          const values = rows[i].split(',').map(v => v.trim());
-          const item: CSVInventoryItem = {};
-
-          headers.forEach((headerOrNull: string | null, index: number) => {
-            const header = headerOrNull || '';
-            const rawValue = values[index];
-            
-            // Skip empty values for optional fields
-            if ((!rawValue || rawValue === '') && !requiredFields.includes(header)) {
-              return;
-            }
-
-            // Ensure we have a string to work with
-            const stringValue = String(rawValue || '').trim();
-            let value: any = stringValue;
-
-            // Handle arrays
-            if (['body_shapes', 'sizes', 'color_tones', 'dress_type'].includes(header)) {
-              value = stringValue ? stringValue.split(';').filter(Boolean).map(val => val.trim()) : [];
-            }
-            
-            // Handle dress attributes
-            if (header === 'dress_attributes') {
-              try {
-                if (!stringValue) {
-                  throw new Error('Dress attributes cannot be empty');
-                }
-                
-                // Parse the JSON string and validate the structure
-                const parsedAttrs = JSON.parse(stringValue.replace(/\n/g, ''));
-                const requiredAttrs = [
-                  'fabric', 'length', 'primary_colour', 'primary_shades',
-                  'pattern', 'neck', 'occasion', 'print', 'shape',
-                  'sleeve_length', 'sleeve_styling'
-                ];
-                
-                // Validate all required fields are present
-                const missingAttrs = requiredAttrs.filter(attr => !(attr in parsedAttrs));
-                if (missingAttrs.length > 0) {
-                  throw new Error(`Missing dress attributes: ${missingAttrs.join(', ')}`);
-                }
-
-                // Convert single values to arrays where needed
-                const arrayFields = ['fabric', 'primary_colour', 'pattern', 'neck', 'occasion', 'print', 'shape'];
-                arrayFields.forEach(field => {
-                  const fieldValue = parsedAttrs[field];
-                  if (fieldValue && !Array.isArray(fieldValue)) {
-                    parsedAttrs[field] = [fieldValue];
-                  }
-                });
-                
-                // Ensure primary_shades is always an array
-                if (!Array.isArray(parsedAttrs.primary_shades)) {
-                  parsedAttrs.primary_shades = parsedAttrs.primary_shades ? [parsedAttrs.primary_shades] : [];
-                }
-                
-                // Keep the original string value for storage
-                value = stringValue;
-                
-                // Store parsed attributes separately
-                item.parsedDressAttributes = parsedAttrs as DressAttributes;
-              } catch (error) {
-                const err = error as Error;
-                throw new Error(`Invalid dress attributes JSON at row ${i + 1}: ${err.message}`);
-              }
-            }
-
-            // Convert numeric values
-            if (header === 'price' || header === 'stock') {
-              const num = Number(value);
-              if (isNaN(num)) {
-                throw new Error(`Invalid number in ${header} at row ${i + 1}`);
-              }
-              value = num;
-            }
-
-            if (header) {
-              item[header] = value;
-            }
-          });
-
-          items.push(item);
-        }
-
-        // Process items
-        for (const item of items) {
-          if (!item.name || !item.price || !item.stock) {
-            throw new Error('Missing required fields: name, price, stock');
-          }
-
-          // Check if item with same name exists
-          const { data: existingItems, error: searchError } = await supabase
-            .from('inventory_items')
-            .select('id')
-            .eq('name', item.name)
-            .maybeSingle();
-
-          if (searchError) throw searchError;
-
-          const dbItem: DBInventoryItem = {
-            name: item.name || '',
-            description: item.description || '',
-            price: item.price || 0,
-            stock: item.stock || 0,
-            image_url: item.image_url || '',
-            image_url_2: item.image_url_2 || null,
-            image_url_3: item.image_url_3 || null,
-            brand_name: item.brand_name || null,
-            sizes: item.sizes || [],
-            body_shapes: item.body_shapes || [],
-            color_tones: item.color_tones || [],
-            dress_type: item.dress_type || []
-          };
-
-          let inventoryItem;
-
-          if (existingItems) {
-            // Update existing item
-            const { data: updatedItem, error: updateError } = await supabase
-              .from('inventory_items')
-              .update(dbItem)
-              .eq('id', existingItems.id)
-              .select()
-              .single();
-
-            if (updateError) throw updateError;
-            inventoryItem = updatedItem;
-          } else {
-            // Insert new item
-            const { data: newItem, error: insertError } = await supabase
-              .from('inventory_items')
-              .insert([dbItem])
-              .select()
-              .single();
-
-            if (insertError) throw insertError;
-            inventoryItem = newItem;
-          }
-
-          if (!inventoryItem) throw new Error('Failed to insert/update inventory item');
-
-          // Handle dress attributes if provided
-          if (item.parsedDressAttributes) {
-            const dressAttrs = item.parsedDressAttributes as DressAttributes;
-            
-            // Check if dress attributes exist for this product
-            const { data: existingAttrs, error: attrSearchError } = await supabase
-              .from('dress_attributes')
-              .select('id')
-              .eq('product_id', inventoryItem.id)
-              .maybeSingle();
-
-            if (attrSearchError) throw attrSearchError;
-
-            if (existingAttrs) {
-              // Update existing attributes
-              const { error: attrUpdateError } = await supabase
-                .from('dress_attributes')
-                .update({
-                  fabric: dressAttrs.fabric,
-                  length: dressAttrs.length,
-                  primary_colour: dressAttrs.primary_colour,
-                  primary_shades: dressAttrs.primary_shades,
-                  pattern: dressAttrs.pattern,
-                  neck: dressAttrs.neck,
-                  occasion: dressAttrs.occasion,
-                  print: dressAttrs.print,
-                  shape: dressAttrs.shape,
-                  sleeve_length: dressAttrs.sleeve_length,
-                  sleeve_styling: dressAttrs.sleeve_styling
-                })
-                .eq('id', existingAttrs.id);
-
-              if (attrUpdateError) throw attrUpdateError;
-            } else {
-              // Insert new attributes
-              const { error: attrInsertError } = await supabase
-                .from('dress_attributes')
-                .insert([{
-                  product_id: inventoryItem.id,
-                  fabric: dressAttrs.fabric,
-                  length: dressAttrs.length,
-                  primary_colour: dressAttrs.primary_colour,
-                  primary_shades: dressAttrs.primary_shades,
-                  pattern: dressAttrs.pattern,
-                  neck: dressAttrs.neck,
-                  occasion: dressAttrs.occasion,
-                  print: dressAttrs.print,
-                  shape: dressAttrs.shape,
-                  sleeve_length: dressAttrs.sleeve_length,
-                  sleeve_styling: dressAttrs.sleeve_styling
-                }]);
-
-              if (attrInsertError) throw attrInsertError;
-            }
-          }
-        }
-
-        await fetchInventory();
+      // Helper function to safely split strings into arrays
+      const safeSplit = (value: string | null, separator: string = ','): string[] => {
+        if (!value) return [];
+        return value.split(separator).map(s => s.trim()).filter(Boolean);
       };
 
-      reader.readAsText(file);
+      const itemData = {
+        name: formData.get('name') as string,
+        description: formData.get('description') as string,
+        price: parseFloat(formData.get('price') as string),
+        stock: parseInt(formData.get('stock') as string),
+        image_url: formData.get('image_url') as string,
+        image_url_2: formData.get('image_url_2') as string || null,
+        image_url_3: formData.get('image_url_3') as string || null,
+        sizes: safeSplit(formData.get('sizes') as string),
+        body_shapes: safeSplit(formData.get('body_shapes') as string),
+        color_tones: safeSplit(formData.get('color_tones') as string),
+        dress_type: safeSplit(formData.get('dress_type') as string)
+      };
+
+      const dressAttributes = {
+        fabric: formData.get('fabric') as string || '',
+        length: formData.get('length') as string || '',
+        primary_colour: formData.get('primary_colour') as string || '',
+        primary_shades: safeSplit(formData.get('primary_shades') as string),
+        pattern: formData.get('pattern') as string || '',
+        neck: formData.get('neck') as string || '',
+        occasion: formData.get('occasion') as string || '',
+        print: formData.get('print') as string || '',
+        shape: formData.get('shape') as string || '',
+        sleeve_length: formData.get('sleeve_length') as string || '',
+        sleeve_styling: formData.get('sleeve_styling') as string || ''
+      };
+
+      // Combine dress type and attributes into a single JSON string
+      const combinedDressData = JSON.stringify({
+        types: itemData.dress_type,
+        attributes: dressAttributes
+      });
+
+      if (editingItem) {
+        // Update existing item
+        const { error: itemError } = await supabase
+          .from('inventory_items')
+          .update({
+            name: itemData.name,
+            description: itemData.description,
+            price: itemData.price,
+            stock: itemData.stock,
+            image_url: itemData.image_url,
+            image_url_2: itemData.image_url_2,
+            image_url_3: itemData.image_url_3
+          })
+          .eq('id', editingItem.id);
+
+        if (itemError) throw itemError;
+
+        // Update item attributes
+        const { error: attrError } = await supabase
+          .from('item_attributes')
+          .update({
+            body_shapes: itemData.body_shapes,
+            color_tones: itemData.color_tones,
+            dress_type: combinedDressData
+          })
+          .eq('item_id', editingItem.id);
+
+        if (attrError) throw attrError;
+      } else {
+        // Insert new item
+        const { data: newItem, error: itemError } = await supabase
+          .from('inventory_items')
+          .insert([{
+            name: itemData.name,
+            description: itemData.description,
+            price: itemData.price,
+            stock: itemData.stock,
+            image_url: itemData.image_url,
+            image_url_2: itemData.image_url_2,
+            image_url_3: itemData.image_url_3
+          }])
+          .select()
+          .single();
+
+        if (itemError) throw itemError;
+        if (!newItem) throw new Error('Failed to insert inventory item');
+
+        // Insert item attributes
+        const { error: attrError } = await supabase
+          .from('item_attributes')
+          .insert([{
+            item_id: newItem.id,
+            body_shapes: itemData.body_shapes,
+            color_tones: itemData.color_tones,
+            dress_type: combinedDressData
+          }]);
+
+        if (attrError) throw attrError;
+      }
+
+      setShowInventoryForm(false);
+      setEditingItem(null);
+      fetchInventory();
     } catch (err) {
-      console.error('Error processing file:', err);
-      setError(err instanceof Error ? err.message : 'Failed to process file');
+      console.error('Error saving inventory item:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save inventory item');
     }
   };
 
@@ -1192,6 +1077,24 @@ export function AdminPanel() {
                         />
                       </div>
                       <div>
+                        <label className="block text-sm font-medium mb-1">Additional Image URL 1 (Optional)</label>
+                        <input
+                          type="url"
+                          name="image_url_2"
+                          defaultValue={editingItem?.image_url_2}
+                          className="w-full px-3 py-2 border rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Additional Image URL 2 (Optional)</label>
+                        <input
+                          type="url"
+                          name="image_url_3"
+                          defaultValue={editingItem?.image_url_3}
+                          className="w-full px-3 py-2 border rounded-lg"
+                        />
+                      </div>
+                      <div>
                         <label className="block text-sm font-medium mb-1">Body Shapes</label>
                         <input
                           type="text"
@@ -1223,6 +1126,132 @@ export function AdminPanel() {
                           className="w-full px-3 py-2 border rounded-lg"
                           required
                         />
+                      </div>
+                      {/* Dress Attributes Section */}
+                      <div className="border-t pt-4 mt-4">
+                        <h3 className="text-lg font-medium mb-4">Dress Attributes</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Fabric</label>
+                            <input
+                              type="text"
+                              name="fabric"
+                              defaultValue={editingItem?.dress_attributes?.fabric}
+                              placeholder="Linen Blend, Cotton, etc."
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Length</label>
+                            <select
+                              name="length"
+                              defaultValue={editingItem?.dress_attributes?.length}
+                              className="w-full px-3 py-2 border rounded-lg"
+                            >
+                              <option value="">Select Length</option>
+                              <option value="Mini">Mini</option>
+                              <option value="Knee">Knee</option>
+                              <option value="Midi">Midi</option>
+                              <option value="Maxi">Maxi</option>
+                              <option value="Long">Long</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Primary Color</label>
+                            <input
+                              type="text"
+                              name="primary_colour"
+                              defaultValue={editingItem?.dress_attributes?.primary_colour}
+                              placeholder="Red, Blue, etc."
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Primary Shades</label>
+                            <input
+                              type="text"
+                              name="primary_shades"
+                              defaultValue={editingItem?.dress_attributes?.primary_shades?.join(', ')}
+                              placeholder="Light, Bright, Dark, etc."
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Pattern</label>
+                            <input
+                              type="text"
+                              name="pattern"
+                              defaultValue={editingItem?.dress_attributes?.pattern}
+                              placeholder="Solid, Floral, etc."
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Neck</label>
+                            <input
+                              type="text"
+                              name="neck"
+                              defaultValue={editingItem?.dress_attributes?.neck}
+                              placeholder="Round, V-neck, etc."
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Occasion</label>
+                            <input
+                              type="text"
+                              name="occasion"
+                              defaultValue={editingItem?.dress_attributes?.occasion}
+                              placeholder="Casual, Formal, etc."
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Print</label>
+                            <input
+                              type="text"
+                              name="print"
+                              defaultValue={editingItem?.dress_attributes?.print}
+                              placeholder="None, Floral, etc."
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Shape</label>
+                            <input
+                              type="text"
+                              name="shape"
+                              defaultValue={editingItem?.dress_attributes?.shape}
+                              placeholder="A-Line, Sheath, etc."
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Sleeve Length</label>
+                            <select
+                              name="sleeve_length"
+                              defaultValue={editingItem?.dress_attributes?.sleeve_length}
+                              className="w-full px-3 py-2 border rounded-lg"
+                            >
+                              <option value="">Select Sleeve Length</option>
+                              <option value="Sleeveless">Sleeveless</option>
+                              <option value="Short">Short</option>
+                              <option value="Half">Half</option>
+                              <option value="Three-Quarter">Three-Quarter</option>
+                              <option value="Long">Long</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Sleeve Styling</label>
+                            <input
+                              type="text"
+                              name="sleeve_styling"
+                              defaultValue={editingItem?.dress_attributes?.sleeve_styling}
+                              placeholder="Regular, Puff, etc."
+                              className="w-full px-3 py-2 border rounded-lg"
+                            />
+                          </div>
+                        </div>
                       </div>
                       <div className="flex justify-end gap-4">
                         <button

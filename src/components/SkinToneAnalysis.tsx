@@ -153,7 +153,7 @@ export function SkinToneAnalysis({ currentResults, onComplete }: Props) {
 
       <div className="flex-1 max-w-md mx-auto w-full px-4 py-6 mb-20">
         {/* Header */}
-        <h1 className="text-[32px] leading-[40px] font-bold text-center mb-2">
+        <h1 className="text-[32px] leading-[40px]  text-center mb-2">
           Skin Tone Quiz
         </h1>
         <p className="text-[16px] leading-[24px] text-[#666666] text-center mb-6">
