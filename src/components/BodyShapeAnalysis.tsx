@@ -281,7 +281,7 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
         <div className="flex items-center px-4 py-3 border-b border-gray-200">
           <button 
             onClick={() => setMethod(null)}
-            className="flex items-center text-gray-600"
+            className="flex items-center text-gray-600 text-base"
           >
             <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -291,19 +291,19 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
         </div>
 
         {/* Quiz Content */}
-        <div className="px-4 pt-8">
-          <h1 className="text-[40px] font-bold text-black mb-4 text-center">
+        <div className="px-4 pt-6">
+          <h1 className="text-[32px] font-bold text-gray-900 mb-2 text-center">
             Bodyshape Quiz
           </h1>
-          <p className="text-lg text-gray-600 mb-8 text-center">
+          <p className="text-base text-gray-600 mb-8 text-center">
             Answer a few questions to determine your body shape
           </p>
 
-          <h2 className="text-2xl text-gray-900 mb-6">
+          <h2 className="text-xl text-gray-900 mb-6">
             {QUIZ_QUESTIONS[currentQuestion].question}
           </h2>
 
-          <div className="space-y-4 max-w-[312px] mx-auto">
+          <div className="space-y-4 max-w-[312px] mx-auto mb-20">
             {QUIZ_QUESTIONS[currentQuestion].options.map((option) => (
               <button
                 key={option.id}
@@ -319,42 +319,17 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
             ))}
           </div>
 
-          {/* Navigation */}
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
-            <div className="max-w-[312px] mx-auto flex items-center justify-between">
-              {currentQuestion > 0 ? (
-                <button
-                  onClick={() => setCurrentQuestion(currentQuestion - 1)}
-                  className="text-gray-600 text-base font-medium"
-                >
-                  Previous
-                </button>
-              ) : (
-                <div className="w-16"></div>
-              )}
-
-              {/* Progress Dots */}
-              <div className="flex gap-1">
-                {QUIZ_QUESTIONS.map((_, idx) => (
-                  <div 
-                    key={idx}
-                    className={`h-[3px] w-8 rounded-full ${
-                      idx === currentQuestion ? 'bg-[#B252FF]' : 'bg-[#E5E5E5]'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {currentQuestion < QUIZ_QUESTIONS.length - 1 ? (
-                <button
-                  onClick={() => handleQuizAnswer(QUIZ_QUESTIONS[currentQuestion].options[0].id)}
-                  className="text-base font-medium bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white px-6 py-2 rounded-lg"
-                >
-                  Next
-                </button>
-              ) : (
-                <div className="w-16"></div>
-              )}
+          {/* Progress Dots */}
+          <div className="fixed bottom-6 left-0 right-0">
+            <div className="flex gap-1 justify-center">
+              {QUIZ_QUESTIONS.map((_, idx) => (
+                <div 
+                  key={idx}
+                  className={`h-[3px] w-8 rounded-full ${
+                    idx === currentQuestion ? 'bg-[#B252FF]' : 'bg-[#E5E5E5]'
+                  }`}
+                />
+              ))}
             </div>
           </div>
         </div>
