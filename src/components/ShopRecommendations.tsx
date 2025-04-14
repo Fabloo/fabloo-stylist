@@ -80,7 +80,12 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
 
   useEffect(() => {
     checkSession();
-    const selectedSkinTone = skinTones.find((tone) => tone.name === skinTone.name);
+    // Find the matching skin tone based on the season
+    const selectedSkinTone = skinTones.find((tone) => {
+      const toneName = tone.name.toLowerCase().trim();
+      return toneName.includes(skinTone.season.toLowerCase());
+    });
+    
     if (selectedSkinTone) {
       setColorPalette({
         primary: selectedSkinTone.shades.slice(0, 4),
@@ -88,7 +93,7 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
         neutral: selectedSkinTone.shades.slice(8, 12)
       });
     }
-  }, []);
+  }, [skinTone.season]);
 
   const checkSession = async () => {
     try {
@@ -161,21 +166,27 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
 
   const handleShare = async (dress: DressItem) => {
     try {
+      // Construct the product URL
+      const baseUrl = window.location.origin;
+      const productUrl = `${baseUrl}/product/${dress.id}`;
+
       if (navigator.share) {
         await navigator.share({
           title: dress.name,
           text: `Check out this ${dress.name} from Fabloo Stylist!`,
-          url: window.location.href
+          url: productUrl
         });
       } else {
         // Fallback for browsers that don't support Web Share API
-        const shareUrl = window.location.href;
-        await navigator.clipboard.writeText(shareUrl);
+        await navigator.clipboard.writeText(productUrl);
         setCartSuccess('Link copied to clipboard!');
         setTimeout(() => setCartSuccess(null), 2000);
       }
     } catch (err) {
-      console.error('Error sharing:', err);
+      // Only log error if it's not a user cancellation
+      if (!(err instanceof Error) || err.name !== 'AbortError') {
+        console.error('Error sharing:', err);
+      }
     }
   };
 
@@ -435,7 +446,11 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
         <div className="grid grid-cols-2 gap-2 sm:gap-6 mt-4 w-full max-w-3xl px-2 sm:px-0">
         {dresses.slice(0, visibleCount).map((dress) => (
             <div key={dress.id} className="group relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-200 flex flex-col">
-            <div className="aspect-[3/4] overflow-hidden relative" style={{ minHeight: '200px' }}>
+            <div 
+              className="aspect-[3/4] overflow-hidden relative cursor-pointer" 
+              style={{ minHeight: '200px' }}
+              onClick={() => setSelectedProduct(dress.id)}
+            >
               <img 
                 src={dress.image_url}
                 alt={dress.name}

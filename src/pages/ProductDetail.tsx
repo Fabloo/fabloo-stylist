@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ShoppingBag, Heart, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, Heart, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { useCart } from '../hooks/useCart';
 
@@ -28,6 +28,9 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
   const [wishlistSuccess, setWishlistSuccess] = React.useState<string | null>(null);
   const [addingToWishlist, setAddingToWishlist] = React.useState(false);
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [selectedImage, setSelectedImage] = React.useState<string>('');
+  const [selectedSize, setSelectedSize] = React.useState<string>('');
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
 
   const checkSession = async () => {
     try {
@@ -51,6 +54,12 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
       'event_label': 'Detail page click'
     });
   }, [id]);
+
+  React.useEffect(() => {
+    if (product) {
+      setSelectedImage(product.image_url);
+    }
+  }, [product]);
 
   const fetchProduct = async () => {
     if (!id) {
@@ -125,6 +134,10 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
         throw new Error('Please sign in to continue');
       }
 
+      if (!selectedSize) {
+        throw new Error('Please select a size');
+      }
+
       setAddingToCart(true);
       setError(null);
       setCartSuccess(null);
@@ -139,7 +152,12 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
       const { error } = await supabase
         .from('cart_items')
         .upsert(
-          { user_id: userId, item_id: itemId },
+          { 
+            user_id: userId, 
+            item_id: itemId,
+            quantity: 1,
+            size_selected: selectedSize
+          },
           { onConflict: 'user_id,item_id' }
         );
 
@@ -225,6 +243,24 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
     // Add your checkout logic here
   };
 
+  const getImages = () => {
+    if (!product) return [];
+    const images = [product.image_url];
+    if (product.image_url_2) images.push(product.image_url_2);
+    if (product.image_url_3) images.push(product.image_url_3);
+    return images;
+  };
+
+  const nextImage = () => {
+    const images = getImages();
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = () => {
+    const images = getImages();
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -259,12 +295,60 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
 
       <div className="grid md:grid-cols-2 gap-8">
         {/* Image Section */}
-        <div className="w-full h-full">
-          <img
-            src={product.image_url}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
+        <div className="w-full h-[500px] relative group">
+          {getImages().map((image, index) => (
+            <div
+              key={image}
+              className={`absolute inset-0 transition-opacity duration-500 ${
+                index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img
+                src={image}
+                alt={`${product.name} view ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+          
+          {/* Navigation Arrows */}
+          {getImages().length > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 backdrop-blur-sm
+                         shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                         hover:bg-white"
+              >
+                <ChevronLeft className="w-6 h-6 text-gray-800" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 backdrop-blur-sm
+                         shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                         hover:bg-white"
+              >
+                <ChevronRight className="w-6 h-6 text-gray-800" />
+              </button>
+            </>
+          )}
+
+          {/* Dots Indicator */}
+          {getImages().length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+              {getImages().map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentImageIndex(index)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    index === currentImageIndex
+                      ? 'bg-white w-4'
+                      : 'bg-white/60 hover:bg-white/80'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Details */}
@@ -273,43 +357,37 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
           <p className="text-3xl font-bold text-gray-900 mb-6">₹{product.price}</p>
           
           <div className="space-y-6">
+            {/* Sizes */}
+            {product.sizes && product.sizes.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Available Sizes</h3>
+                <div className="grid grid-cols-4 gap-2">
+                  {(typeof product.sizes === 'string' ? JSON.parse(product.sizes) : product.sizes).map((size: string) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`py-2 rounded-lg border text-sm font-medium transition-all
+                        ${selectedSize === size 
+                          ? 'border-black bg-black text-white scale-105' 
+                          : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                        }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">Description</h3>
               <p className="text-gray-600">{product.description}</p>
             </div>
 
-            {/* <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Perfect For</h3>
-              <div className="flex flex-wrap gap-2">
-                {product.item_attributes?.body_shapes?.map((shape: string) => (
-                  <span
-                    key={shape}
-                    className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm"
-                  >
-                    {shape}
-                  </span>
-                ))}
-              </div>
-            </div> */}
-
-            {/* <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Color Tones</h3>
-              <div className="flex flex-wrap gap-2">
-                {product.item_attributes?.color_tones?.map((tone: string) => (
-                  <span
-                    key={tone}
-                    className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm"
-                  >
-                    {tone}
-                  </span>
-                ))}
-              </div>
-            </div> */}
-
             <div className="pt-6 space-y-4">
               <button
                 onClick={() => addToCart(id)}
-                disabled={addingToCart || product.stock <= 0}
+                disabled={addingToCart || product.stock <= 0 || !selectedSize}
                 className="w-full flex items-center justify-center gap-2 py-3 px-8
                          bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white rounded-full font-medium
                          hover:opacity-90 transition-opacity duration-200 disabled:opacity-50
@@ -317,6 +395,7 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
               >
                 <ShoppingBag className="w-5 h-5" />
                 {product.stock <= 0 ? 'Out of Stock' : 
+                 !selectedSize ? 'Select a Size' :
                  cartSuccess === id ? 'Added to Cart!' : 'Add to Cart'}
               </button>
 

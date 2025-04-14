@@ -1277,13 +1277,14 @@ export function AdminPanel() {
               )}
               <div className="grid md:grid-cols-3 gap-6">
                 {inventory.map((item) => (
-                  <div key={item.id} className="border  rounded-lg overflow-hidden">
-                    <div className="h-[400px]">
+                  <div key={item.id} className="border rounded-lg overflow-hidden">
+                    <div className="h-[400px] relative group cursor-pointer" onClick={() => navigate(`/product/${item.id}`)}>
                       <img
                         src={item.image_url}
                         alt={item.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-200"
                       />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200" />
                     </div>
                     <div className="p-4">
                       <h3 className="font-medium text-gray-900">{item.name}</h3>
