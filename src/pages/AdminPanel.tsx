@@ -110,13 +110,12 @@ interface DBInventoryItem {
 
 export function AdminPanel() {
   const { isAdmin, user } = useAuthStore();
-  console.log("user", user);
-  console.log("isAdmin", isAdmin);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'orders' | 'returns' | 'inventory'>('orders');
   const [orders, setOrders] = useState<Order[]>([]);
   const [returns, setReturns] = useState<Return[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -134,8 +133,30 @@ export function AdminPanel() {
   console.log("isAdmin", isAdmin);
 
   useEffect(() => {
+    fetchBrands();
     fetchUploadFormat();
   }, []);
+
+  const fetchBrands = async () => {
+    try {
+      console.log('Fetching brands...');
+      const { data, error } = await supabase
+        .from('brands')
+        .select('*')
+        .order('Name');
+
+      if (error) {
+        console.error('Error fetching brands:', error);
+        throw error;
+      }
+
+      console.log('Fetched brands:', data);
+      setBrands(data || []);
+    } catch (err) {
+      console.error('Error in fetchBrands:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch brands');
+    }
+  };
 
   const fetchUploadFormat = async () => {
     try {
@@ -179,11 +200,19 @@ export function AdminPanel() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === 'inventory') {
+      fetchInventory();
+      fetchBrands();  // Fetch brands when inventory tab is active
+    }
+  }, [activeTab]);
+
   const fetchInventory = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      console.log('Fetching inventory items...');
       const { data, error } = await supabase
         .from('inventory_items')
         .select(`
@@ -192,13 +221,23 @@ export function AdminPanel() {
             body_shapes,
             color_tones,
             dress_type
+          ),
+          brand:brand_id (
+            id,
+            Name
           )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching inventory:', error);
+        throw error;
+      }
+
+      console.log('Fetched inventory items:', data);
       setInventory(data || []);
     } catch (err) {
+      console.error('Error in fetchInventory:', err);
       setError(err instanceof Error ? err.message : 'Failed to load inventory');
     } finally {
       setLoading(false);
@@ -224,6 +263,7 @@ export function AdminPanel() {
         image_url: formData.get('image_url') as string,
         image_url_2: formData.get('image_url_2') as string || null,
         image_url_3: formData.get('image_url_3') as string || null,
+        brand_id: formData.get('brand_id') as string || null,
         sizes: safeSplit(formData.get('sizes') as string),
         body_shapes: safeSplit(formData.get('body_shapes') as string),
         color_tones: safeSplit(formData.get('color_tones') as string),
@@ -261,7 +301,8 @@ export function AdminPanel() {
             stock: itemData.stock,
             image_url: itemData.image_url,
             image_url_2: itemData.image_url_2,
-            image_url_3: itemData.image_url_3
+            image_url_3: itemData.image_url_3,
+            brand_id: itemData.brand_id
           })
           .eq('id', editingItem.id);
 
@@ -289,7 +330,8 @@ export function AdminPanel() {
             stock: itemData.stock,
             image_url: itemData.image_url,
             image_url_2: itemData.image_url_2,
-            image_url_3: itemData.image_url_3
+            image_url_3: itemData.image_url_3,
+            brand_id: itemData.brand_id
           }])
           .select()
           .single();
@@ -1041,30 +1083,28 @@ export function AdminPanel() {
                           required
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Price</label>
-                          <input
-                            type="number"
-                            name="price"
-                            defaultValue={editingItem?.price}
-                            step="0.01"
-                            min="0"
-                            className="w-full px-3 py-2 border rounded-lg"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Stock</label>
-                          <input
-                            type="number"
-                            name="stock"
-                            defaultValue={editingItem?.stock}
-                            min="0"
-                            className="w-full px-3 py-2 border rounded-lg"
-                            required
-                          />
-                        </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Price</label>
+                        <input
+                          type="number"
+                          name="price"
+                          defaultValue={editingItem?.price}
+                          step="0.01"
+                          min="0"
+                          className="w-full px-3 py-2 border rounded-lg"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Stock</label>
+                        <input
+                          type="number"
+                          name="stock"
+                          defaultValue={editingItem?.stock}
+                          min="0"
+                          className="w-full px-3 py-2 border rounded-lg"
+                          required
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Image URL</label>
@@ -1093,6 +1133,30 @@ export function AdminPanel() {
                           defaultValue={editingItem?.image_url_3}
                           className="w-full px-3 py-2 border rounded-lg"
                         />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Brand</label>
+                        <select
+                          name="brand_id"
+                          defaultValue={editingItem?.brand_id || ''}
+                          className="w-full px-3 py-2 border rounded-lg"
+                          required
+                          onChange={(e) => console.log('Selected brand:', e.target.value)}
+                        >
+                          <option value="">Select Brand</option>
+                          {brands && brands.length > 0 ? (
+                            brands.map((brand) => (
+                              <option key={brand.id} value={brand.id}>
+                                {brand.Name} ({brand.id})
+                              </option>
+                            ))
+                          ) : (
+                            <option value="" disabled>No brands available</option>
+                          )}
+                        </select>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {editingItem?.brand_id ? `Current brand ID: ${editingItem.brand_id}` : 'No brand selected'}
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Body Shapes</label>
@@ -1305,6 +1369,10 @@ export function AdminPanel() {
                         <p className="text-sm">
                           <span className="font-medium">Type:</span>{' '}
                           {item.item_attributes?.[0]?.dress_type}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Brand:</span>{' '}
+                          {item.brand?.Name || 'No brand assigned'}
                         </p>
                       </div>
                       <div className="mt-4 flex justify-end gap-2">
