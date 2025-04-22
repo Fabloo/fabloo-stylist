@@ -1094,10 +1094,7 @@ export function AdminPanel() {
           ) : activeTab === 'orders' ? (
             <div className="space-y-4">
               {filteredOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className="border border-gray-200 rounded-lg p-4"
-                >
+                <div key={order.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="font-medium text-gray-900">
@@ -1218,6 +1215,25 @@ export function AdminPanel() {
                           required
                         />
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Price</label>
+                        <input
+                          type="number"
+                          name="price"
+                          defaultValue={editingItem?.price}
+                          className="w-full px-3 py-2 border rounded-lg"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Stock</label>
+                        <input
+                          type="number"
+                          name="stock"
+                          defaultValue={editingItem?.stock}
+                          className="w-full px-3 py-2 border rounded-lg"
+                          required
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Image URL</label>
@@ -1254,22 +1270,25 @@ export function AdminPanel() {
                           defaultValue={editingItem?.brand_id || ''}
                           className="w-full px-3 py-2 border rounded-lg"
                           required
-                          onChange={(e) => console.log('Selected brand:', e.target.value)}
                         >
                           <option value="">Select Brand</option>
-                          {brands && brands.length > 0 ? (
-                            brands.map((brand) => (
-                              <option key={brand.id} value={brand.id}>
-                                {brand.Name} ({brand.id})
-                              </option>
-                            ))
-                          ) : (
-                            <option value="" disabled>No brands available</option>
-                          )}
+                          {brands.map((brand) => (
+                            <option key={brand.id} value={brand.id}>
+                              {brand.Name}
+                            </option>
+                          ))}
                         </select>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {editingItem?.brand_id ? `Current brand ID: ${editingItem.brand_id}` : 'No brand selected'}
-                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Sizes</label>
+                        <input
+                          type="text"
+                          name="sizes"
+                          defaultValue={editingItem?.sizes?.join(', ')}
+                          placeholder="S, M, L, XL"
+                          className="w-full px-3 py-2 border rounded-lg"
+                          required
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Body Shapes</label>
@@ -1298,7 +1317,7 @@ export function AdminPanel() {
                         <input
                           type="text"
                           name="dress_type"
-                          defaultValue={editingItem?.item_attributes?.[0]?.dress_type}
+                          defaultValue={editingItem?.item_attributes?.[0]?.dress_type?.join(', ')}
                           placeholder="casual, formal, etc."
                           className="w-full px-3 py-2 border rounded-lg"
                           required
@@ -1526,10 +1545,7 @@ export function AdminPanel() {
           ) : (
             <div className="space-y-4">
               {filteredReturns.map((returnItem) => (
-                <div
-                  key={returnItem.id}
-                  className="border border-gray-200 rounded-lg p-4"
-                >
+                <div key={returnItem.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="font-medium text-gray-900">
