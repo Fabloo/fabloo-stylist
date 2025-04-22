@@ -1218,28 +1218,6 @@ export function AdminPanel() {
                           required
                         />
                       </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Price</label>
-                          <input
-                            type="number"
-                            name="price"
-                            defaultValue={editingItem?.price}
-                            step="0.01"
-                            min="0"
-                            className="w-full px-3 py-2 border rounded-lg"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Stock</label>
-                          <input
-                            type="number"
-                            name="stock"
-                            defaultValue={editingItem?.stock}
-                            min="0"
-                            className="w-full px-3 py-2 border rounded-lg"
-                            required
-                          />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Image URL</label>
