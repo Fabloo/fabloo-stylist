@@ -197,14 +197,14 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
                   {/* DO's */}
                   <div>
                     <h4 className="text-[#1E8227] text-base font-semibold leading-[19.2px] font-poppins mb-4">DO'S</h4>
-                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="grid grid-cols-2 gap-3">
                       {recommendations?.styleTips.do.map((tip, i) => (
                         <div 
                           key={i} 
-                          className="flex items-center gap-2.5 px-5 py-3.5 bg-[#F2F9F3] rounded-lg min-w-max"
+                          className="flex items-center gap-2.5 px-5 py-3.5 bg-[#F2F9F3] rounded-lg"
                         >
-                          <span className="text-[#1E8227] text-lg">✓</span>
-                          <p className="text-[#1E8227] text-base leading-[19.2px] font-poppins whitespace-nowrap">
+                          <span className="text-[#1E8227] text-lg flex-shrink-0">✓</span>
+                          <p className="text-[#1E8227] text-base leading-[19.2px] font-poppins">
                             {tip}
                           </p>
                         </div>
@@ -215,14 +215,14 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
                   {/* DON'Ts */}
                   <div>
                     <h4 className="text-[#D92D20] text-base font-semibold leading-[19.2px] font-poppins mb-4">DON'TS</h4>
-                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="grid grid-cols-2 gap-3">
                       {recommendations?.styleTips.avoid.map((tip, i) => (
                         <div 
                           key={i} 
-                          className="flex items-center gap-2.5 px-5 py-3.5 bg-[#FEF3F2] rounded-lg min-w-max"
+                          className="flex items-center gap-2.5 px-5 py-3.5 bg-[#FEF3F2] rounded-lg"
                         >
-                          <span className="text-[#D92D20] text-lg">✗</span>
-                          <p className="text-[#D92D20] text-base leading-[19.2px] font-poppins whitespace-nowrap">
+                          <span className="text-[#D92D20] text-lg flex-shrink-0">✗</span>
+                          <p className="text-[#D92D20] text-base leading-[19.2px] font-poppins">
                             {tip}
                           </p>
                         </div>
