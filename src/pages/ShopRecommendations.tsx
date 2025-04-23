@@ -5,15 +5,38 @@ import { ProductFilter, Product } from '../lib/api/products';
 import { supabase } from '../lib/supabase';
 import { SlidersHorizontal, X, ChevronDown } from 'lucide-react';
 
+// Define types for filter options and categories
+interface FilterOptions {
+  brand_name: string[];
+  fabric: string[];
+  length: string[];
+  color: string[];
+  pattern: string[];
+  neck: string[];
+  occasion: string[];
+  print: string[];
+  shape: string[];
+  sleeve_length: string[];
+  sleeve_styling: string[];
+  body_shapes: string[];
+  color_tones: string[];
+  dress_type: string[];
+}
+
+interface PriceRange {
+  min: number;
+  max: number;
+}
+
 export function ShopRecommendations() {
   const navigate = useNavigate();
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<ProductFilter>({});
+  const [filters, setFilters] = useState<Partial<FilterOptions>>({});
   const [showFilters, setShowFilters] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
+  const [priceRange, setPriceRange] = useState<PriceRange>({ min: 0, max: 10000 });
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -67,9 +90,9 @@ export function ShopRecommendations() {
     // Apply body shape filter
     if (
       filters.body_shapes && 
-      Array.isArray(filters.body_shapes) && 
       filters.body_shapes.length > 0 && 
-      !item.item_attributes?.body_shapes?.some((shape) => 
+      item.item_attributes?.body_shapes && 
+      !item.item_attributes.body_shapes.some((shape: string) => 
         filters.body_shapes?.includes(shape)
       )
     ) {
@@ -79,9 +102,9 @@ export function ShopRecommendations() {
     // Apply color tone filter
     if (
       filters.color_tones && 
-      Array.isArray(filters.color_tones) && 
       filters.color_tones.length > 0 && 
-      !item.item_attributes?.color_tones?.some((tone) => 
+      item.item_attributes?.color_tones && 
+      !item.item_attributes.color_tones.some((tone: string) => 
         filters.color_tones?.includes(tone)
       )
     ) {
@@ -91,9 +114,9 @@ export function ShopRecommendations() {
     // Apply dress type filter
     if (
       filters.dress_type && 
-      Array.isArray(filters.dress_type) && 
       filters.dress_type.length > 0 && 
-      !item.item_attributes?.dress_type?.some((type) => 
+      item.item_attributes?.dress_type && 
+      !item.item_attributes.dress_type.some((type: string) => 
         filters.dress_type?.includes(type)
       )
     ) {
@@ -101,18 +124,18 @@ export function ShopRecommendations() {
     }
 
     // Apply price range filter
-    if (typeof filters.minPrice === 'number' && item.price < filters.minPrice) {
+    if (priceRange.min > 0 && item.price < priceRange.min) {
       return false;
     }
-    if (typeof filters.maxPrice === 'number' && item.price > filters.maxPrice) {
+    if (priceRange.max < 10000 && item.price > priceRange.max) {
       return false;
     }
 
     return true;
   });
 
-  const filterOptions = {
-    brand_name: ['Brand 1', 'Brand 2', 'Brand 3'], // This will be populated from your data
+  const filterOptions: FilterOptions = {
+    brand_name: ['Brand 1', 'Brand 2', 'Brand 3'],
     fabric: ['Cotton', 'Silk', 'Polyester', 'Linen', 'Chiffon'],
     length: ['Mini', 'Midi', 'Maxi', 'Knee Length'],
     color: ['Black', 'White', 'Red', 'Blue', 'Green', 'Purple'],
@@ -122,7 +145,28 @@ export function ShopRecommendations() {
     print: ['Floral', 'Abstract', 'Geometric', 'Animal', 'None'],
     shape: ['A-Line', 'Straight', 'Fit and Flare', 'Bodycon', 'Empire'],
     sleeve_length: ['Sleeveless', 'Short', '3/4th', 'Full'],
-    sleeve_styling: ['Regular', 'Puff', 'Bell', 'Cap', 'Kimono']
+    sleeve_styling: ['Regular', 'Puff', 'Bell', 'Cap', 'Kimono'],
+    body_shapes: [],
+    color_tones: [],
+    dress_type: []
+  };
+
+  // Update the filter button click handler
+  const handleFilterClick = (category: keyof FilterOptions, option: string) => {
+    const currentFilters = filters[category] || [];
+    const newFilters = currentFilters.includes(option)
+      ? currentFilters.filter((f: string) => f !== option)
+      : [...currentFilters, option];
+    setFilters({ ...filters, [category]: newFilters });
+  };
+
+  // Apply filters function
+  const applyFilters = () => {
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      price: { min: priceRange.min, max: priceRange.max }
+    }));
+    setIsModalOpen(false);
   };
 
   return (
@@ -288,18 +332,12 @@ export function ShopRecommendations() {
                     <div key={category}>
                       <h4 className="font-medium mb-3 capitalize">{category.replace('_', ' ')}</h4>
                       <div className="flex flex-wrap gap-2">
-                        {options.map((option) => (
+                        {options.map((option: string) => (
                           <button
                             key={option}
-                            onClick={() => {
-                              const currentFilters = filters[category] || [];
-                              const newFilters = currentFilters.includes(option)
-                                ? currentFilters.filter(f => f !== option)
-                                : [...currentFilters, option];
-                              setFilters({ ...filters, [category]: newFilters });
-                            }}
+                            onClick={() => handleFilterClick(category as keyof FilterOptions, option)}
                             className={`px-3 py-1.5 rounded-full text-sm ${
-                              filters[category]?.includes(option)
+                              (filters[category as keyof FilterOptions] || []).includes(option)
                                 ? 'bg-purple-600 text-white'
                                 : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                             }`}
@@ -325,10 +363,7 @@ export function ShopRecommendations() {
                       Clear All
                     </button>
                     <button
-                      onClick={() => {
-                        setFilters({ ...filters, minPrice: priceRange.min, maxPrice: priceRange.max });
-                        setIsModalOpen(false);
-                      }}
+                      onClick={applyFilters}
                       className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                     >
                       Apply Filters
