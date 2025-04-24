@@ -73,6 +73,13 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
         .from('inventory_items')
         .select(`
           *,
+          brands!inventory_items_brand_id_fkey (
+            id,
+            Name,
+            logo,
+            return_policy,
+            delivery_time
+          ),
           item_attributes (
             body_shapes,
             color_tones,
@@ -354,6 +361,7 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
         {/* Product Details */}
         <div className="p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h1>
+          <p className="text-lg text-gray-600 mb-3">{product?.brands?.Name}</p>
           <p className="text-3xl font-bold text-gray-900 mb-6">₹{product.price}</p>
           
           <div className="space-y-6">
@@ -379,6 +387,35 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
               </div>
             )}
 
+            {/* Brand Information Section */}
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-start gap-4">
+                {product?.brands?.logo && (
+                  <img 
+                    src={product.brands.logo} 
+                    alt={product.brands.Name} 
+                    className="w-16 h-16 object-contain rounded-lg bg-white p-2"
+                  />
+                )}
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {product?.brands?.Name}
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span className="text-sm font-medium text-gray-600">Delivery:</span>
+                      <span className="text-sm text-gray-800">{product?.brands?.delivery_time}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-sm font-medium text-gray-600">Return Policy:</span>
+                      <span className="text-sm text-gray-800">{product?.brands?.return_policy}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">Description</h3>
               <p className="text-gray-600">{product.description}</p>

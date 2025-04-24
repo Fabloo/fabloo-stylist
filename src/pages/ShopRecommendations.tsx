@@ -61,9 +61,12 @@ export function ShopRecommendations() {
           .from('inventory_items')
           .select(`
             *,
-            brand:brand_id (
+            brands:inventory_items_brand_id_fkey (
               id,
-              Name
+              Name,
+              logo,
+              return_policy,
+              delivery_time
             ),
             item_attributes (
               body_shapes,
@@ -75,7 +78,18 @@ export function ShopRecommendations() {
           .contains('item_attributes->color_tones', [parsedSkinTone.undertone]);
 
         if (fetchError) throw fetchError;
-        setRecommendations(data || []);
+        
+        // Transform the data to include brand name
+        const transformedData = data?.map(item => {
+          console.log('Raw item data:', item); // Debug log for raw item
+          return {
+            ...item,
+            brand: item.brands // Map the brands data to brand property
+          };
+        }) || [];
+
+        console.log('Transformed data:', transformedData); // Debug log for transformed data
+        setRecommendations(transformedData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch recommendations');
       } finally {
@@ -220,51 +234,52 @@ export function ShopRecommendations() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredRecommendations.map((item) => (
-                <div
-                  key={item.id}
-                  className="group cursor-pointer"
-                  onClick={() => navigate(`/product/${item.id}`)}
-                >
-                  <div className="relative aspect-square overflow-hidden rounded-lg">
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    {item.image_url_2 && (
+              {filteredRecommendations.map((item) => {
+                console.log('Rendering item:', item); // Debug log for rendered item
+                return (
+                  <div
+                    key={item.id}
+                    className="group cursor-pointer"
+                    onClick={() => navigate(`/product/${item.id}`)}
+                  >
+                    <div className="relative aspect-square overflow-hidden rounded-lg">
                       <img
-                        src={item.image_url_2}
+                        src={item.image_url}
                         alt={item.name}
-                        className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
-                    )}
-                  </div>
-                  <div className="mt-4">
-                    <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
-                    <p className="mt-1 text-sm text-gray-500">{item.brand?.Name}</p>
-                    <p className="mt-1 text-sm font-medium text-gray-900">₹{item.price}</p>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {item.item_attributes?.body_shapes?.map((shape) => (
-                        <span
-                          key={shape}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                        >
-                          {shape}
-                        </span>
-                      ))}
-                      {item.item_attributes?.color_tones?.map((tone) => (
-                        <span
-                          key={tone}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                        >
-                          {tone}
-                        </span>
-                      ))}
+                      {item.image_url_2 && (
+                        <img
+                          src={item.image_url_2}
+                          alt={item.name}
+                          className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                        />
+                      )}
+                    </div>
+                    <div className="p-2 sm:p-3 flex flex-col flex-grow">
+                      <h4 className="text-[13px] sm:text-[15px] font-medium text-gray-900 mb-1 line-clamp-2 min-h-[32px] sm:min-h-[40px]">
+                        {item.name}
+                      </h4>
+                      <p className="text-[12px] sm:text-[14px] font-medium text-[#BC4BF8] mb-2">
+                        {item.brand?.Name}
+                      </p>
+                      <div className="mt-auto">
+                        <div className="flex justify-between items-center mb-2 sm:mb-3">
+                          <p className="text-[13px] sm:text-[15px] font-semibold text-gray-900 tracking-tight">₹{item.price}</p>
+                        </div>
+                        <button className="w-full py-2 sm:py-2.5 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-xs sm:text-sm font-medium rounded-lg hover:opacity-90 transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="w-3.5 h-3.5 sm:w-4 sm:h-4">
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                            <path d="M3 6h18"></path>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                          </svg>
+                          Add to Cart
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -19,6 +19,7 @@ import { getStyleRecommendations } from './utils/styleRecommendations';
 import { GoogleTagManager } from './components/GoogleTagManager';
 import ColorWheel from './components/ColorWheel';
 import MetaPixel from './components/MetaPexel';
+import { supabase } from './lib/supabase';
 
 type RecommendationsPageProps = {
   initialResults: {
@@ -360,12 +361,47 @@ function LandingPage() {
 }
 
 function App() {
-  // const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
-  const [analysisResults, setAnalysisResults] = useState<{
-    bodyShape?: BodyShape;
-    skinTone?: SkinTone;
-  }>({});
+  const [analysisResults, setAnalysisResults] = useState<UserProfile>({});
   const navigate = useNavigate();
+
+  // Check authentication and profile status on app load
+  useEffect(() => {
+    const checkAuthAndRedirect = async () => {
+      // Only redirect if we're on the root path
+      if (window.location.pathname !== '/') {
+        return;
+      }
+
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (session && !error) {
+        try {
+          // Get the user's profile from Supabase
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          // If we have a valid profile with body shape and skin tone, redirect to recommendations
+          if (profile?.body_shape && profile?.skin_tone) {
+            setAnalysisResults({
+              id: session.user.id,
+              bodyShape: profile.body_shape,
+              skinTone: profile.skin_tone,
+              body_shape: profile.body_shape,
+              skin_tone: profile.skin_tone
+            });
+            navigate('/recommendations');
+          }
+        } catch (e) {
+          console.error('Error fetching profile:', e);
+        }
+      }
+    };
+
+    checkAuthAndRedirect();
+  }, [navigate]);
 
   const handleBodyShapeComplete = (bodyShape: BodyShape) => {
     setAnalysisResults(prev => ({ ...prev, bodyShape }));

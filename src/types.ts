@@ -1,16 +1,21 @@
 export type BodyShape = 'hourglass' | 'pear' | 'inverted-triangle' | 'rectangle' | 'apple';
 
 export type SkinTone = {
+  id?: string;
+  name?: string;
+  hexColor?: string;
   season: 'warm' | 'cool' | 'neutral';
   undertone: 'warm' | 'cool' | 'neutral';
 };
 
 export type UserProfile = {
-  id: string;
+  id?: string;
   bodyShape?: BodyShape;
   skinTone?: SkinTone;
   created_at?: string;
   updated_at?: string;
+  body_shape?: BodyShape;
+  skin_tone?: SkinTone;
 };
 
 export type InventoryItem = {

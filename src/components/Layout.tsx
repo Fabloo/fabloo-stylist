@@ -225,42 +225,49 @@ export function Layout({ children }: LayoutProps) {
             ) : (
               <ul className="space-y-6">
                 {localCartItems.map((item) => (
-                  <li key={item.id} className="flex bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-                    {/* Enhanced Product Image */}
-                    <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+                  <li key={item.id} className="flex bg-white p-4 rounded-lg shadow-sm relative">
+                    {/* Product Image - Taking full height */}
+                    <div className="flex-shrink-0 w-28 h-auto aspect-[3/4] rounded-xl overflow-hidden border border-gray-100">
                       <img
                         src={item.inventory_items.image_url}
                         alt={item.inventory_items.name}
-                        className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-200"
+                        className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                       />
                     </div>
 
-                    {/* Improved Details Layout */}
-                    <div className="ml-4 flex-1 flex flex-col">
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-lg font-medium text-gray-900 hover:text-black transition-colors duration-200">
-                          {item.inventory_items.name}
-                        </h3>
-                        <p className="text-lg font-semibold text-gray-800">
-                          ₹{(item.inventory_items.price * item.quantity).toFixed(2)}
-                        </p>
-                      </div>
-                      <div className="mt-2 flex justify-between items-center">
-                        <div className="flex items-center space-x-4">
-                          <span className="px-2 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
-                            Size: {item.size_selected}
-                          </span>
-                          <span className="px-2 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
-                            Qty: {item.quantity}
-                          </span>
+                    {/* Cross button - Absolute positioned */}
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="absolute top-3 right-3 inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-50 group transition-colors duration-200"
+                    >
+                      <X className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors duration-200" />
+                    </button>
+
+                    {/* Product Details */}
+                    <div className="ml-4 flex-1">
+                      {/* Title and Brand */}
+                      <h3 className="text-[15px] font-medium text-gray-900 mb-1 pr-8">
+                        {item.inventory_items.name}
+                      </h3>
+                      <p className="text-[14px] font-medium text-[#BC4BF8] mb-2">
+                        {item.inventory_items.brands?.Name}
+                      </p>
+
+                      {/* Price */}
+                      <p className="text-[15px] font-semibold text-gray-900 mb-3">
+                        ₹{(item.inventory_items.price * item.quantity).toFixed(2)}
+                      </p>
+
+                      {/* Size and Quantity Pills */}
+                      <div className="flex gap-3">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg">
+                          <span className="text-[13px] text-gray-500">Size:</span>
+                          <span className="text-[13px] font-medium text-gray-900">{item.size_selected}</span>
                         </div>
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors duration-200 flex items-center"
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          Remove
-                        </button>
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg">
+                          <span className="text-[13px] text-gray-500">Qty:</span>
+                          <span className="text-[13px] font-medium text-gray-900">{item.quantity}</span>
+                        </div>
                       </div>
                     </div>
                   </li>

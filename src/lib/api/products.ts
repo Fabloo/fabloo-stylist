@@ -17,32 +17,25 @@ export interface ProductFilter {
   [key: string]: string[] | number | undefined;
 }
 
+interface Brand {
+  id: number;
+  Name: string;
+  logo: string;
+  return_policy: string;
+  delivery_time: string;
+}
+
 export interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
+  stock: number;
   image_url: string;
   image_url_2?: string;
   image_url_3?: string;
-  brand_id?: string;
-  brand?: {
-    id: string;
-    Name: string;
-  };
-  dress_attributes?: {
-    fabric?: string;
-    length?: string;
-    primary_colour?: string;
-    primary_shades?: string[];
-    pattern?: string;
-    neck?: string;
-    occasion?: string;
-    print?: string;
-    shape?: string;
-    sleeve_length?: string;
-    sleeve_styling?: string;
-  };
+  brand_id: number;
+  brand?: Brand;
   item_attributes?: {
     body_shapes?: string[];
     color_tones?: string[];

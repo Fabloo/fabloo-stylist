@@ -13,6 +13,13 @@ interface CartItem {
     price: number;
     image_url: string;
     stock: number;
+    brands?: {
+      id: string;
+      Name: string;
+      logo: string;
+      return_policy: string;
+      delivery_time: string;
+    };
   };
 }
 
@@ -197,7 +204,14 @@ export const useCartStore = create<CartState>((set, get) => ({
             description,
             price,
             image_url,
-            stock
+            stock,
+            brands:inventory_items_brand_id_fkey (
+              id,
+              Name,
+              logo,
+              return_policy,
+              delivery_time
+            )
           )
         `)
         .eq('user_id', session.user.id);

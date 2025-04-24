@@ -98,7 +98,7 @@ export function Checkout({ onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(true);
   const { profile } = useProfile();
   const [validationErrors, setValidationErrors] = useState<{
     payment?: string;
@@ -218,7 +218,10 @@ export function Checkout({ onSuccess }: Props) {
       'phone'
     ] as const;
 
-    const missingFields = requiredFields.filter(field => !address[field] || !address[field].trim());
+    const missingFields = requiredFields.filter(field => {
+      const value = address[field];
+      return !value || (typeof value === 'string' && value.trim() === '');
+    });
     
     if (missingFields.length > 0) {
       throw new Error(`Please fill in all required fields: ${missingFields.map(field => field.replace(/([A-Z])/g, ' $1').toLowerCase()).join(', ')}`);
