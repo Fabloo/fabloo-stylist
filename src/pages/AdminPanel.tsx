@@ -110,7 +110,7 @@ interface DBInventoryItem {
 }
 
 export function AdminPanel() {
-  const { isAdmin, user } = useAuthStore();
+  const { isAdmin, user, isLoading: authLoading } = useAuthStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'orders' | 'returns' | 'inventory'>('orders');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -128,10 +128,12 @@ export function AdminPanel() {
   const [showUploadGuide, setShowUploadGuide] = useState(false);
   const [uploadFormat, setUploadFormat] = useState<any>(null);
   const [fileProcessing, setFileProcessing] = useState(false);
-  const [authChecking, setAuthChecking] = useState(true);
 
-  console.log("user", user);
-  console.log("isAdmin", isAdmin);
+  useEffect(() => {
+    if (!authLoading && (!user || !isAdmin)) {
+      navigate('/');
+    }
+  }, [user, isAdmin, authLoading, navigate]);
 
   useEffect(() => {
     fetchBrands();
@@ -171,25 +173,6 @@ export function AdminPanel() {
       console.error('Error fetching upload format:', err);
     }
   };
-
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      await useAuthStore.getState().checkAuth();
-      setAuthChecking(false);
-    };
-    
-    checkAuthentication();
-  }, []);
-  
-
-  useEffect(() => {
-    if (!authChecking && (!user || user?.user_metadata?.role !== 'admin')) {
-      console.log("not admin");
-      console.log(user);
-      console.log(user?.role);
-      console.log(authChecking);
-    }
-  }, [user, authChecking, navigate]);
 
   useEffect(() => {
     if (activeTab === 'orders') {
@@ -899,7 +882,7 @@ export function AdminPanel() {
     }
   };
 
-  if (authChecking) {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black" />
@@ -907,9 +890,9 @@ export function AdminPanel() {
     );
   }
 
-  // if (!isAdmin) {
-  //   return null;
-  // }
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -1284,7 +1267,9 @@ export function AdminPanel() {
                         <input
                           type="text"
                           name="sizes"
-                          defaultValue={editingItem?.sizes?.join(', ')}
+                          defaultValue={Array.isArray(editingItem?.sizes) 
+                            ? editingItem.sizes.join(', ') 
+                            : editingItem?.sizes || ''}
                           placeholder="S, M, L, XL"
                           className="w-full px-3 py-2 border rounded-lg"
                           required
@@ -1317,7 +1302,18 @@ export function AdminPanel() {
                         <input
                           type="text"
                           name="dress_type"
-                          defaultValue={editingItem?.item_attributes?.[0]?.dress_type?.join(', ')}
+                          defaultValue={(() => {
+                            try {
+                              const dressTypeData = editingItem?.item_attributes?.[0]?.dress_type;
+                              if (typeof dressTypeData === 'string') {
+                                const parsed = JSON.parse(dressTypeData);
+                                return parsed.types?.join(', ') || '';
+                              }
+                              return Array.isArray(dressTypeData) ? dressTypeData.join(', ') : '';
+                            } catch (e) {
+                              return '';
+                            }
+                          })()}
                           placeholder="casual, formal, etc."
                           className="w-full px-3 py-2 border rounded-lg"
                           required
