@@ -15,6 +15,7 @@ export function ProductsPage() {
         setLoading(true);
         setError(null);
         const result = await getFilteredProducts(filters);
+        console.log("result", result);
         setProducts(result.products);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch products');
