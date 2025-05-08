@@ -27,24 +27,24 @@ export function Profile() {
   const { logout } = useAuthStore();
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [addressForm, setAddressForm] = useState({
-    addressLine1: profile?.address_line1 || '',
-    addressLine2: profile?.address_line2 || '',
-    city: profile?.city || '',
-    state: profile?.state || '',
-    pincode: profile?.pincode || ''
+    addressLine1: (profile?.address_line1 as string) || '',
+    addressLine2: (profile?.address_line2 as string) || '',
+    city: (profile?.city as string) || '',
+    state: (profile?.state as string) || '',
+    pincode: (profile?.pincode as string) || ''
   });
-  console.log("authenticated", isAuthenticated)
+  console.log("authenticated profile", isAuthenticated)
   useEffect(() => {
     if (isAuthenticated) {
       fetchOrders();
     }
     if (profile) {
       setAddressForm({
-        addressLine1: profile?.address_line1 || '',
-        addressLine2: profile?.address_line2 || '',
-        city: profile?.city || '',
-        state: profile?.state || '',
-        pincode: profile?.pincode || ''
+        addressLine1: (profile?.address_line1 as string) || '',
+        addressLine2: (profile?.address_line2 as string) || '',
+        city: (profile?.city as string) || '',
+        state: (profile?.state as string) || '',
+        pincode: (profile?.pincode as string) || ''
       });
     }
     console.log("addressForm", addressForm)
@@ -106,6 +106,10 @@ export function Profile() {
 
       setOrdersLoading(true);
       setError(null);
+      
+      // Clear the token from localStorage
+      localStorage.removeItem('supabase.auth.token');
+      
       await logout();
       navigate('/');
     } catch (err) {
@@ -236,6 +240,54 @@ export function Profile() {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
         <p className="text-lg text-gray-600 mb-4">Please sign in to view your profile</p>
+        <div className="bg-gray-100 p-4 rounded-md mx-auto max-w-lg mb-6 text-left text-sm">
+          <h3 className="font-semibold mb-2">Authentication Debug Info:</h3>
+          <p>Status: <span className="text-red-600">Not Authenticated</span></p>
+          <p>Loading: {isLoading ? 'True' : 'False'}</p>
+          <div className="mt-2">
+            <p className="font-semibold">Token in Storage:</p>
+            <p>{localStorage.getItem('supabase.auth.token') ? 'Found' : 'Not Found'}</p>
+          </div>
+          <div className="mt-4 flex space-x-2">
+            <button
+              onClick={() => {
+                // Force a manual authentication if token is present
+                const tokenString = localStorage.getItem('supabase.auth.token');
+                if (tokenString) {
+                  try {
+                    const tokenData = JSON.parse(tokenString);
+                    const userId = tokenData.userId || tokenData.user_id || crypto.randomUUID();
+                    
+                    // Manually set the user in auth store
+                    useAuthStore.getState().setUser({
+                      id: userId,
+                      phone: tokenData.phone || '',
+                      aud: 'authenticated',
+                      role: 'authenticated'
+                    });
+                    
+                    // Reload the page to refresh authentication state
+                    window.location.reload();
+                  } catch (err) {
+                    console.error('Error forcing authentication:', err);
+                  }
+                }
+              }}
+              className="px-3 py-1 text-xs bg-green-600 text-white rounded"
+            >
+              Force Auth
+            </button>
+            <button
+              onClick={() => {
+                localStorage.removeItem('supabase.auth.token');
+                window.location.reload();
+              }}
+              className="px-3 py-1 text-xs bg-red-600 text-white rounded"
+            >
+              Clear Token
+            </button>
+          </div>
+        </div>
         <button
           onClick={() => navigate('/auth')}
           className="inline-flex items-center px-4 py-2 text-sm font-medium text-black 

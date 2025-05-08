@@ -55,38 +55,15 @@ interface StyleState {
 }
 
 // Create separate stores for different domains
-export const useAuthStore = create<AuthState>((set, get) => ({
-  isAuthenticated: false,
-  user: null,
-  isLoading: true,
-  profile: null,
-  isAdmin: false,
-  setUser: (user) => {
-    const isAdmin = user?.role === 'admin' || user?.user_metadata?.role === 'admin';
-    set({ user : user, isAuthenticated: !!user, isAdmin : isAdmin });
-  },
-  setProfile: (profile) => set({ profile }),
-  logout: async () => {
-    await supabase.auth.signOut();
-    set({ user: null, profile: null, isAuthenticated: false, isLoading: false, isAdmin: false });
-  },
-  checkAuth: async () => {
+export const useAuthStore = create<AuthState>((set, get) => {
+  // Helper function to process an authenticated user
+  const processAuthenticatedUser = async (session: any) => {
+    if (!session?.user) {
+      throw new Error('Invalid session');
+    }
+    
     try {
-      set({ isLoading: true });
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        set({ 
-          user: null, 
-          profile: null, 
-          isAuthenticated: false, 
-          isLoading: false, 
-          isAdmin: false 
-        });
-        return;
-      }
-
-      // Check if user has admin role in either user metadata or role field
+      // Check if user has admin role
       const isAdmin = 
         session.user?.role === 'admin' || 
         session.user?.user_metadata?.role === 'admin';
@@ -104,6 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           id: dbProfile.id,
           bodyShape: dbProfile.body_shape as BodyShape | undefined,
           skinTone: dbProfile.skin_tone as SkinTone | undefined,
+          // Include all database fields
           ...dbProfile
         };
       }
@@ -117,66 +95,179 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
       
       console.log('Auth check completed:', {
-        user: session.user,
-        isAdmin: isAdmin
+        user: session.user?.id,
+        isAuthenticated: true,
+        hasProfile: !!appProfile
       });
     } catch (error) {
-      console.error('Auth check error:', error);
-      set({ 
-        user: null, 
-        profile: null, 
-        isAuthenticated: false, 
-        isLoading: false, 
-        isAdmin: false 
-      });
-    }
-  },
-  updateProfile: async (updates) => {
-    const { user, profile } = get();
-    if (!user) return;
-
-    try {
-      // Prepare database fields from updates
-      const dbUpdates: any = {};
-      
-      // Handle body shape - database field is body_shape
-      if (updates.bodyShape) {
-        dbUpdates.body_shape = updates.bodyShape;
-      }
-      
-      // Handle skin tone - database field is skin_tone (stored as JSONB)
-      if (updates.skinTone) {
-        dbUpdates.skin_tone = updates.skinTone;
-      }
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          ...dbUpdates,
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      // Add the updates to the current profile
-      const updatedProfile = {
-        ...profile,
-        ...updates,
-        // Add these fields to match database columns for consistency
-        body_shape: updates.bodyShape || profile?.bodyShape,
-        skin_tone: updates.skinTone || profile?.skinTone
-      };
-      
-      set({ profile: updatedProfile });
-    } catch (error) {
-      console.error('Profile update error:', error);
+      console.error('Error processing authenticated user:', error);
       throw error;
     }
-  }
-}));
+  };
+
+  return {
+    isAuthenticated: false,
+    user: null,
+    isLoading: true,
+    profile: null,
+    isAdmin: false,
+    setUser: (user) => {
+      // const isAdmin = user?.role === 'admin' || user?.user_metadata?.role === 'admin';
+      set({ user : user, isAuthenticated: !!user, isAdmin : false });
+    },
+    setProfile: (profile) => set({ profile }),
+    logout: async () => {
+      await supabase.auth.signOut();
+      localStorage.removeItem('supabase.auth.token');
+      set({ user: null, profile: null, isAuthenticated: false, isLoading: false, isAdmin: false });
+    },
+    checkAuth: async () => {
+      try {
+        set({ isLoading: true });
+        
+        // Get active session from Supabase
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        // If we have an active session, use it
+        if (session?.user) {
+          console.log('Active session found, user authenticated:', session.user.id);
+          await processAuthenticatedUser(session);
+          return;
+        }
+        
+        // If no active session, check for stored token
+        const tokenString = localStorage.getItem('supabase.auth.token');
+        if (!tokenString) {
+          console.log('No token found, user is not authenticated');
+          set({ 
+            user: null, 
+            profile: null, 
+            isAuthenticated: false, 
+            isLoading: false, 
+            isAdmin: false 
+          });
+          return;
+        }
+        
+        console.log('Token found, attempting to use it for authentication');
+        
+        try {
+          // Parse the stored token
+          const tokenData = JSON.parse(tokenString);
+          const userId = tokenData.userId || tokenData.user_id;
+          
+          if (!userId) {
+            throw new Error('Invalid token: no user ID found');
+          }
+          
+          // Create a manual user object
+          const manualUser = {
+            id: userId,
+            phone: tokenData.phone || '',
+            aud: 'authenticated',
+            role: 'authenticated'
+          };
+          
+          // Set basic authentication state
+          set({ 
+            user: manualUser, 
+            isAuthenticated: true, 
+            isLoading: false 
+          });
+          
+          // Try to fetch profile for this user
+          console.log('Fetching profile data for user:', userId);
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+          
+          if (profileData) {
+            console.log('Profile found for user');
+            const profile = {
+              id: profileData.id,
+              bodyShape: profileData.body_shape as BodyShape | undefined,
+              skinTone: profileData.skin_tone as SkinTone | undefined,
+              ...profileData
+            };
+            
+            set({ profile });
+          } else {
+            console.warn('No profile found for user:', userId);
+          }
+        } catch (tokenError) {
+          console.error('Error processing stored token:', tokenError);
+          
+          // Clear invalid token
+          localStorage.removeItem('supabase.auth.token');
+          
+          set({ 
+            user: null, 
+            profile: null, 
+            isAuthenticated: false, 
+            isLoading: false, 
+            isAdmin: false 
+          });
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        set({ 
+          user: null, 
+          profile: null, 
+          isAuthenticated: false, 
+          isLoading: false, 
+          isAdmin: false 
+        });
+      }
+    },
+    updateProfile: async (updates) => {
+      const { user, profile } = get();
+      if (!user) return;
+
+      try {
+        // Prepare database fields from updates
+        const dbUpdates: any = {};
+        
+        // Handle body shape - database field is body_shape
+        if (updates.bodyShape) {
+          dbUpdates.body_shape = updates.bodyShape;
+        }
+        
+        // Handle skin tone - database field is skin_tone (stored as JSONB)
+        if (updates.skinTone) {
+          dbUpdates.skin_tone = updates.skinTone;
+        }
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            ...dbUpdates,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        
+        // Add the updates to the current profile
+        const updatedProfile = {
+          ...profile,
+          ...updates,
+          // Add these fields to match database columns for consistency
+          body_shape: updates.bodyShape || profile?.bodyShape,
+          skin_tone: updates.skinTone || profile?.skinTone
+        };
+        
+        set({ profile: updatedProfile });
+      } catch (error) {
+        console.error('Profile update error:', error);
+        throw error;
+      }
+    }
+  };
+});
 
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],

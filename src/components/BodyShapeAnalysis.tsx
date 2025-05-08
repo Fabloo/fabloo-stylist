@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, ClipboardList } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import type { BodyShape } from '../types';
 import { analyzeBodyShape } from '../utils/bodyShapeAnalysis';
@@ -71,6 +71,15 @@ declare global {
     gtag: (command: string, event: string, params: any) => void;
   }
 }
+
+// Body shape images
+const BODY_SHAPE_IMAGES = {
+  rectangle: "https://res.cloudinary.com/drvhoqgno/image/upload/v1744268226/rectangle_body_type.png",
+  hourglass: "https://res.cloudinary.com/drvhoqgno/image/upload/v1744268226/hourglass_body_type.png",
+  apple: "https://res.cloudinary.com/drvhoqgno/image/upload/v1744268226/apple_body_type.png",
+  pear: "https://res.cloudinary.com/drvhoqgno/image/upload/v1744268226/pear_body_type.png",
+  "inverted-triangle": "https://res.cloudinary.com/drvhoqgno/image/upload/v1744268226/inverted_triangle_body_type.png"
+};
 
 export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
   const navigate = useNavigate();
@@ -210,51 +219,102 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
 
   if (!method) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
-        <div className="max-w-2xl mx-auto text-center px-4 pt-6 pb-4 flex-1">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Body Shape Analysis</h2>
-          <p className="text-base text-gray-600 mb-4">
-          Choose your method: Take the quiz or upload a photo.
+      <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="px-4 pt-6 pb-4 text-center">
+          <h2 className="text-xl font-bold text-black mb-1">Body Shape Analysis</h2>
+          <p className="text-sm text-gray-700">
+            Find styles that flatter your unique shape.
           </p>
+          <div className="h-px bg-gray-200 w-full mt-5"></div>
+        </div>
 
-          {/* Quiz section */}
-          <div className="w-full max-w-[312px] mx-auto mb-4">
-            {/* Info section */}
-            <div className="flex items-center gap-4 p-4 bg-white border border-[#EAEAEA] rounded-[12px] mb-4 shadow-sm">
-              <img 
-                src="https://res.cloudinary.com/drvhoqgno/image/upload/v1743678198/Screenshot_2025-04-03_at_4.24.26_PM_1_nm9cfe.png"
-                alt="Info"
-                className="w-[56px] h-[56px]"
-              />
-              <p className="text-[#1A1A1A] text-base leading-[22px] font-normal flex-1">
-                Discover your perfect fit! Take our quick body shape quiz now!
-              </p>
+        {/* Main content */}
+        <div className="px-4 pt-5 flex-1">
+          <h3 className="text-lg font-semibold text-black text-center mb-6">
+            Discover Your Perfect Fit!
+          </h3>
+
+          {/* Body Shape Grid */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            {/* Rectangle */}
+            <div className="flex flex-col items-center">
+              <div className="h-36 w-24 bg-[#FFF3EC] rounded-md mb-2 flex items-center justify-center">
+                <img 
+                  src="https://res.cloudinary.com/dmafmaoif/image/upload/v1746693095/Screenshot_2025-04-30_at_1.32.54_PM_2_zpvjqx.png" 
+                  alt="Rectangle body shape"
+                  className="h-32"
+                />
+              </div>
+              <span className="text-black text-sm">Rectangle</span>
             </div>
 
+            {/* Hourglass */}
+            <div className="flex flex-col items-center">
+              <div className="h-36 w-24 bg-[#FFFBE5] rounded-md mb-2 flex items-center justify-center">
+                <img 
+                  src="https://res.cloudinary.com/dmafmaoif/image/upload/v1746693095/Frame_2147228348_vpp2yk.png" 
+                  alt="Hourglass body shape"
+                  className="h-32"
+                />
+              </div>
+              <span className="text-black text-sm">Hourglass</span>
+            </div>
+
+            {/* Apple */}
+            <div className="flex flex-col items-center">
+              <div className="h-36 w-24 bg-[#F4FFF0] rounded-md mb-2 flex items-center justify-center">
+                <img 
+                  src="https://res.cloudinary.com/dmafmaoif/image/upload/v1746693095/Frame_2147228348-1_ehkebk.png" 
+                  alt="Apple body shape"
+                  className="h-32"
+                />
+              </div>
+              <span className="text-black text-sm">Apple</span>
+            </div>
+
+            {/* Pear */}
+            <div className="flex flex-col items-center">
+              <div className="h-36 w-24 bg-[#E5F9FF] rounded-md mb-2 flex items-center justify-center">
+                <img 
+                  src="https://res.cloudinary.com/dmafmaoif/image/upload/v1746693095/Frame_2147228348-2_qaz57s.png" 
+                  alt="Pear body shape"
+                  className="h-32"
+                />
+              </div>
+              <span className="text-black text-sm">Pear</span>
+            </div>
+
+            {/* Inverted Triangle */}
+            <div className="flex flex-col items-center col-span-2 mx-auto">
+              <div className="h-36 w-24 bg-[#FAECFF] rounded-md mb-2 flex items-center justify-center">
+                  <img 
+                    src="https://res.cloudinary.com/dmafmaoif/image/upload/v1746693095/Frame_2147228348-3_ti8mje.png" 
+                  alt="Inverted Triangle body shape"
+                  className="h-32"
+                />
+              </div>
+              <span className="text-black text-sm">Inverted Triangle</span>
+            </div>
+          </div>
+
+          {/* Choose Method */}
+          <h3 className="text-lg font-semibold text-black text-center mb-5">
+            Choose Your Method
+          </h3>
+
+          {/* Method selection buttons */}
+          <div className="flex flex-row gap-4 max-w-xs pb-4 mx-auto">
             <button
               onClick={handleQuizStart}
-              className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-lg font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow"
+              className="w-full py-4 bg-[#D259FF] text-white text-base font-semibold rounded-lg"
             >
-              Take Quiz
+              Start Quiz
             </button>
-          </div>
 
-          {/* Example image with adjusted size */}
-          <div className="mb-6">
-            <img 
-              src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742291530/Frame_1000003512_kf4boz.png"
-              alt="Clothing examples"
-              className="w-[200px] mx-auto"
-            />
-          </div>
-
-          {/* Upload Photo button */}
-          <div className="w-full max-w-[312px] mx-auto">
-            <label className="block">
-              <div className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2 cursor-pointer">
-                <Upload className="w-6 h-6" />
-                <span className="text-lg">Upload Photo</span>
-              </div>
+            <label className="w-full py-4 bg-white border border-[#D259FF] text-[#D259FF] text-base font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer">
+              <Upload className="w-5 h-5" />
+              <span>Upload Photo</span>
               <input
                 type="file"
                 accept="image/*"
@@ -265,7 +325,7 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 text-red-700 rounded-lg mt-4 text-base max-w-[312px] mx-auto">
+            <div className="p-3 bg-red-50 text-red-700 rounded-lg mt-4 text-base max-w-xs mx-auto">
               {error}
             </div>
           )}
@@ -344,18 +404,17 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
         Let's start by analyzing your body shape. Choose your preferred method.
       </p>
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="flex flex-row gap-4 mb-8">
         <button
           onClick={() => setMethod('quiz')}
-          className="flex items-center justify-center gap-3 p-6 bg-black 
-                   text-white rounded-xl hover:bg-indigo-700 transition-colors"
+          className="flex items-center justify-center gap-3 p-6 bg-[#D259FF] 
+                   text-white rounded-xl hover:bg-[#B252FF] transition-colors"
         >
-          <ClipboardList className="w-6 h-6" />
-          <span className="text-lg font-medium">Take Quiz</span>
+          <span className="text-lg font-medium">Start Quiz</span>
         </button>
 
-        <label className="flex items-center justify-center gap-3 p-6 bg-black
-                       text-white rounded-xl hover:bg-indigo-700 transition-colors cursor-pointer">
+        <label className="flex items-center justify-center gap-3 p-6 bg-white
+                       border border-[#D259FF] text-[#D259FF] rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
           <Upload className="w-6 h-6" />
           <span className="text-lg font-medium">Upload Photo</span>
           <input

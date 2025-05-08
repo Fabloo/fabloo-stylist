@@ -1133,10 +1133,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
         )}
 
         {/* Bottom Filter Button */}
-        <div className="fixed bottom-0 left-0 right-0 flex justify-center p-4 bg-gradient-to-t from-white via-white to-transparent z-30">
+        <div className="fixed bottom-0 left-0 right-0 flex justify-center p-4 bg-gradient-to-t from-white via-white to-white z-30">
           <button
             onClick={() => setFilterModalOpen(true)}
-            className="w-full max-w-3xl py-3 px-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] rounded-full text-white font-medium text-sm flex items-center justify-center gap-2 shadow-lg"
+            className="w-full max-w-3xl py-3 px-4 border border-[#B252FF] rounded-full text-[#B252FF] font-medium text-sm flex items-center justify-center gap-2 shadow-lg"
           >
             <Filter size={18} />
             Filter Products

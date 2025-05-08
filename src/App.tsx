@@ -40,6 +40,7 @@ function RecommendationsPage({ initialResults }: RecommendationsPageProps) {
 
   useEffect(() => {
     const token = localStorage.getItem('supabase.auth.token');
+    console.log("Token:", token);
     if (token) {
       setIsAuthenticated(true);
     }
@@ -279,14 +280,20 @@ function LandingPage() {
   };
 
   return (
-    <div className="w-full min-h-screen space-y-12 flex flex-col items-start pb-24 relative bg-gradient-to-b from-purple-50 to-white">
+    <div className="w-full h-full space-y-12 flex flex-col items-start  relative bg-gradient-to-b from-purple-50 to-white">
       {/* Hero Section */}
       <div className="w-full relative">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-100/50 to-pink-100/50 z-0" />
-        <img 
+        {/* <img 
           src="https://res.cloudinary.com/dofgnvgo6/image/upload/v1744395474/Screenshot_2025-04-11_at_11.47.10_PM_ejr2dl.png"
           alt="Fabloo app screenshot"
           className="w-full relative z-10 transform hover:scale-[1.02] transition-transform duration-500"
+        /> */}
+        <img 
+          src="https://res.cloudinary.com/dmafmaoif/image/upload/v1746689517/Frame_2147228338_rvpynr.svg"
+          alt="Fabloo app screenshot"
+          className="relative z-10 h-auto w-auto  transform hover:scale-[1.02] transition-transform duration-500"
+          loading="lazy"
         />
       </div>
 
@@ -297,8 +304,8 @@ function LandingPage() {
         </div>
 
         {/* Color Wheel Card - Horizontal */}
-        <div className="w-full h-[160px] bg-gradient-to-tr from-[rgba(225,187,255,0.25)] to-[rgba(255,226,255,0.25)] rounded-[16px] border border-[#EAEAEA] shadow-[4px_4px_8px_rgba(0,0,0,0.05)] relative overflow-hidden">
-          <div className="absolute left-6 top-1/2 -translate-y-1/2 w-[120px] h-[120px]">
+        <div className="w-full h-[120px]  rounded-[16px] border border-[#EAEAEA] shadow-[4px_4px_8px_rgba(0,0,0,0.05)] relative overflow-hidden">
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 w-[100px] h-[100px]">
             <svg viewBox="0 0 100 100" className="w-full h-full">
               <path d="M 50,50 L 100,50 A 50,50 0 0,1 93.3,75 Z" fill="#00C2AF" />
               <path d="M 50,50 L 93.3,75 A 50,50 0 0,1 75,93.3 Z" fill="#009775" />
@@ -313,7 +320,7 @@ function LandingPage() {
               <path d="M 50,50 L 75,6.7 A 50,50 0 0,1 93.3,25 Z" fill="#3A48BA" />
               <path d="M 50,50 L 93.3,25 A 50,50 0 0,1 100,50 Z" fill="#006FC4" />
             </svg>
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] rounded-full overflow-hidden bg-white border-2 border-white shadow-lg">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[50px] h-[50px] rounded-full overflow-hidden bg-white border-2 border-white shadow-lg">
               <img
                 src="https://res.cloudinary.com/drvhoqgno/image/upload/v1743339615/pixelcut-export__2_-removebg_tlsny4.png"
                 alt="Profile"
@@ -321,21 +328,21 @@ function LandingPage() {
               />
             </div>
           </div>
-          <div className="absolute left-[180px] top-[50%] -translate-y-1/2">
-            <div className="text-[#212121] text-[18px] font-medium font-poppins">
+          <div className="absolute left-[150px] top-[50%] -translate-y-1/2">
+            <div className="text-[#212121] text-center  text-[16px] font-normal font-poppins">
               Shades That Shine On You
             </div>
           </div>
         </div>
 
         {/* Styles Card - Horizontal */}
-        <div className="w-full h-[160px] bg-gradient-to-tr from-[rgba(225,187,255,0.25)] to-[rgba(255,226,255,0.25)] rounded-[16px] border border-[#EAEAEA] shadow-[4px_4px_8px_rgba(0,0,0,0.05)] relative overflow-hidden">
+        <div className="w-full h-[120px]  rounded-[16px] border border-[#EAEAEA] shadow-[4px_4px_8px_rgba(0,0,0,0.05)] relative overflow-hidden">
           <div className="absolute left-6 top-[50%] -translate-y-1/2">
-            <div className="text-[#212121] text-[18px] font-medium font-poppins max-w-[140px] leading-[22px]">
-              Styles That<br />Flatters On <br /> You
+            <div className="text-[#212121] text-[15px] font-normal text-center font-poppins max-w-[160px] leading-[22px]">
+              Styles That<br />Flatters On You
             </div>
           </div>
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 w-[160px] flex justify-center ml-12">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 w-[140px] flex justify-center ml-12">
             <img
               src="https://res.cloudinary.com/drvhoqgno/image/upload/v1742970214/Marianne_Jones_Body_Shape_For_Dresses_6_2048x2048_2_ahcorn.png"
               alt="Style"
@@ -352,7 +359,7 @@ function LandingPage() {
             onClick={startAnalysis}
             className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-[16px] font-medium leading-5 font-poppins rounded-[8px] shadow-lg hover:shadow-xl transition-shadow"
           >
-            Get Started
+            New to Fabloo?
           </button>
         </div>
       </div>

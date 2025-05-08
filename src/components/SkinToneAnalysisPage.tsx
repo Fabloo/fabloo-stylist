@@ -1,7 +1,8 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload } from 'lucide-react';
 
-export function SkinToneOptions() {
+export function SkinToneAnalysisPage() {
   const navigate = useNavigate();
 
   return (
@@ -100,19 +101,16 @@ export function SkinToneOptions() {
           </h3>
           
           {/* Method Buttons */}
-          <div className="flex flex-row justify-center  gap-4 max-w-sm mx-auto">
+          <div className="flex flex-col gap-4 max-w-xs mx-auto">
             <button
-              onClick={() => {
-                console.log("Navigating to skin-tone-quiz with fromOptions: true");
-                navigate('/skin-tone-quiz', { state: { fromOptions: true } });
-              }}
-              className="w-1/2 py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-lg font-medium rounded-[12px] shadow-lg hover:shadow-xl transition-shadow"
+              onClick={() => navigate('/skin-tone-quiz', { state: { fromOptions: true } })}
+              className="w-full py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-lg font-medium rounded-[12px] shadow-lg hover:shadow-xl transition-shadow"
             >
               Start Quiz
             </button>
             
             <label className="block">
-              <div className="w-full py-4 px-2 flex items-center justify-center gap-2 bg-white border border-[#B252FF] text-[#B252FF] text-lg font-medium rounded-[12px] shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+              <div className="w-full py-4 bg-white border border-[#B252FF] text-[#B252FF] text-lg font-medium rounded-[12px] shadow-sm hover:shadow-md transition-shadow flex items-center justify-center gap-2 cursor-pointer">
                 <Upload className="w-5 h-5" />
                 <span>Take Selfie</span>
               </div>
@@ -121,7 +119,6 @@ export function SkinToneOptions() {
                 accept="image/*"
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    console.log("Uploading file, navigating to detector with file in state");
                     navigate('/skin-tone-detector', { 
                       state: { file: e.target.files[0], fromOptions: true }
                     });

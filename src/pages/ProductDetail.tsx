@@ -416,9 +416,36 @@ export function ProductDetail({ id: propId, onClose: propOnClose }: Props) {
             </div>
 
             {/* Description */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Description</h3>
-              <p className="text-gray-600">{product.description}</p>
+            <div className="bg-gray-50 rounded-lg p-5">
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <span className="inline-block w-1 h-5 bg-gradient-to-r from-[#B252FF] to-[#F777F7] rounded mr-2"></span>
+                Description
+              </h3>
+              <div className="text-gray-600 space-y-3">
+                {product.description?.split('-').map((section: string, index: number) => {
+                  // Skip empty sections
+                  if (!section.trim()) return null;
+                  
+                  // Check if this is a key-value pair (contains '**')
+                  if (section.includes('**')) {
+                    const parts = section.split('**');
+                    // Format as a key-value pair
+                    return (
+                      <div key={index} className="flex flex-wrap items-center gap-2 bg-white p-3 rounded-md shadow-sm">
+                        <span className="font-medium text-[#B252FF]">{parts[1]}:</span>
+                        <span className="text-gray-700">{parts[2] || ''}</span>
+                      </div>
+                    );
+                  } else {
+                    // Regular text paragraph
+                    return (
+                      <p key={index} className="leading-relaxed py-2">
+                        {section.trim()}
+                      </p>
+                    );
+                  }
+                })}
+              </div>
             </div>
 
             <div className="pt-6 space-y-4">
