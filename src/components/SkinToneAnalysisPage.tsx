@@ -95,6 +95,10 @@ export function SkinToneAnalysisPage() {
               </div>
             </div>
           </div>
+
+
+          <div className='fixed bottom-0 left-0 right-0 bg-white'>
+
           
           <h3 className="text-2xl font-bold text-gray-900 mb-6">
             Choose Your Method
@@ -128,6 +132,7 @@ export function SkinToneAnalysisPage() {
                 capture="user"
               />
             </label>
+          </div>
           </div>
         </div>
       </div>

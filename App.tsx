@@ -5,6 +5,9 @@ import { SkinToneOptions } from './components/SkinToneOptions';
 import { SkinToneAnalysis } from './components/SkinToneAnalysis';
 import { SkinToneDetector } from './components/SkinToneDetector';
 import SkinToneRecommendations from './components/SkinToneRecommendations';
+import { FriendCircleResults } from './pages/FriendCircleResults';
+import { ProductReview } from './pages/ProductReview';
+import { ReviewSuccess } from './pages/ReviewSuccess';
 import { useState } from 'react';
 import { GoogleTagManager } from './components/GoogleTagManager';
 import { MetaPixel } from './components/MetaPixel';
@@ -68,6 +71,17 @@ function App() {
             <Route path="/skin-tone-quiz" element={<SkinToneAnalysis />} />
             <Route path="/skin-tone-detector" element={<SkinToneDetector />} />
             <Route path="/skin-tone-recommendations" element={<SkinToneRecommendations />} />
+            
+            {/* Friend Circle Results */}
+            <Route path="/friend-circle-results" element={<FriendCircleResults />} />
+            
+            {/* Review Pages - No layout wrapper for these to match the design */}
+            <Route path="/review/:itemId/:shareId" element={
+              <ProductReview />
+            } />
+            <Route path="/review-success/:itemId" element={
+              <ReviewSuccess />
+            } />
           </Routes>
         </Layout>
       </ErrorBoundary>

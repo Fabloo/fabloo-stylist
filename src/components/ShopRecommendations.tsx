@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { ShoppingBag, Share2, Heart, Search, X, ChevronRight, Filter, Check, ChevronUp } from 'lucide-react';
+import { ShoppingBag, Share2, Heart, Search, X, ChevronRight, Filter, Check, ChevronUp, Users } from 'lucide-react';
 import type { BodyShape, SkinTone } from '../types';
 import { getStyleRecommendations } from '../utils/styleRecommendations';
 import { useCartStore } from '../store';
@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { useCart } from '../hooks/useCart';
 import { useWishlist } from '../hooks/useWishlist';
 import { toast } from 'react-toastify';
+import { ShareWithFriends } from './ShareWithFriends';
 import { motion, AnimatePresence } from 'framer-motion';
 type Props = {
   bodyShape: BodyShape;
@@ -69,6 +70,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement | null>(null);
   const { addToWishlist, refreshWishlist, wishlistItems: currentWishlistItems } = useWishlist();
+  
+  // Friend circle sharing states
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [selectedDressForShare, setSelectedDressForShare] = useState<DressItem | null>(null);
   
   // New filter states
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -189,24 +194,18 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
     }
   };
 
-  const handleShare = async (dress: DressItem) => {
+  const handleShare = async (e: React.MouseEvent, dress: DressItem) => {
     try {
-      // Construct the product URL
-      const baseUrl = window.location.origin;
-      const productUrl = `${baseUrl}/product/${dress.id}`;
-
-      if (navigator.share) {
-        await navigator.share({
-          title: dress.name,
-          text: `Check out this ${dress.name} from Fabloo Stylist!`,
-          url: productUrl
-        });
-      } else {
-        // Fallback for browsers that don't support Web Share API
-        await navigator.clipboard.writeText(productUrl);
-        setCartSuccess('Link copied to clipboard!');
-        setTimeout(() => setCartSuccess(null), 2000);
+      e.stopPropagation();
+      if (!isAuthenticated) {
+        setError('Please sign in to share with friends');
+        setTimeout(() => setError(null), 3000);
+        return;
       }
+
+      // Open the share modal with the selected dress
+      setSelectedDressForShare(dress);
+      setShareModalOpen(true);
     } catch (err) {
       // Only log error if it's not a user cancellation
       if (!(err instanceof Error) || err.name !== 'AbortError') {
@@ -214,6 +213,38 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
       }
     }
   };
+
+  const NormalShare = async (e: React.MouseEvent, dress: DressItem) => {
+    try {
+      e.stopPropagation();
+      const baseUrl = window.location.origin;
+      const productUrl = `${baseUrl}/product/${dress.id}`;
+      const shareText = `Check out this ${dress.name} from Fabloo Stylist!`;
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: dress.name,
+          text: shareText,
+          url: productUrl
+        });
+        setCartSuccess('Item shared successfully!');
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        await navigator.clipboard.writeText(`${shareText}\n\n${productUrl}`);
+        setCartSuccess('Link copied to clipboard! You can now paste it in WhatsApp or any other app.');
+      }
+      setTimeout(() => setCartSuccess(null), 2000);
+    } catch (err) {
+      // Only log error if it's not a user cancellation
+      if (!(err instanceof Error) || err.name !== 'AbortError') {
+        console.error('Error sharing:', err);
+        setError('Failed to share item. Please try again.');
+        setTimeout(() => setError(null), 3000);
+      }
+    }
+  };
+
+  
 
   useEffect(() => {
     async function fetchRecommendations() {
@@ -987,7 +1018,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                         >
                           <span className="text-xs font-medium text-purple-800">{attr}: {value}</span>
                           <button 
-                            onClick={() => toggleAttributeFilter(attr, value)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleAttributeFilter(attr, value);
+                            }}
                             className="ml-1 text-purple-500 hover:text-purple-700"
                           >
                             <X size={12} />
@@ -1014,14 +1048,17 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                   {Object.values(brands).map((brand) => (
                     <button
                       key={brand.id}
-                      onClick={() => setSelectedBrand(brand.id === selectedBrand ? null : brand.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedBrand(brand.id === selectedBrand ? null : brand.id);
+                      }}
                       className={`flex items-center justify-between px-3 py-2 rounded-lg text-left ${
                         brand.id === selectedBrand 
                           ? 'bg-purple-100 border border-purple-300 text-purple-800' 
                           : 'bg-white border border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <span className="text-xs font-medium truncate">{brand.name}</span>
+                      <span className="text-xs font-medium truncate">{brand.Name}</span>
                       {brand.id === selectedBrand && (
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1033,7 +1070,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                 {selectedBrand && (
                   <div className="mt-2 flex justify-end">
                     <button 
-                      onClick={() => setSelectedBrand(null)} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedBrand(null);
+                      }}
                       className="text-xs text-purple-600 hover:text-purple-800"
                     >
                       Clear Selection
@@ -1061,15 +1101,30 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                 className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-200"
                 style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%' }}
               />
-              <div className="absolute top-2 right-2 flex gap-1.5">
+              <div className="absolute bottom-2 right-2 flex gap-1.5">
                 <button
-                  onClick={() => handleShare(dress)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    NormalShare(e, dress);
+                  }}
                   className="bg-white/90 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-colors duration-200 shadow-sm"
                 >
                   <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
                 <button
-                  onClick={() => handleWishlist(dress)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShare(e, dress);
+                  }}
+                  className="bg-white/90 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-colors duration-200 shadow-sm"
+                >
+                  <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleWishlist(dress);
+                  }}
                   className={`bg-white/90 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-colors duration-200 shadow-sm ${
                     addingToCart === `wishlist-${dress.id}` ? 'animate-pulse' : ''
                   }`}
@@ -1303,7 +1358,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                                       type="checkbox"
                                       className="sr-only"
                                       checked={attributeFilters[attributeKey]?.includes(value) || false}
-                                      onChange={() => toggleAttributeFilter(attributeKey, value)}
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        toggleAttributeFilter(attributeKey, value);
+                                      }}
                                     />
                                   </div>
                                   <div className="flex-1 flex items-center justify-between">
@@ -1414,7 +1472,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                                       type="checkbox"
                                       className="sr-only"
                                       checked={attributeFilters[attributeKey]?.includes(value) || false}
-                                      onChange={() => toggleAttributeFilter(attributeKey, value)}
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        toggleAttributeFilter(attributeKey, value);
+                                      }}
                                     />
                                   </div>
                                   <div className="flex-1 flex items-center justify-between">
@@ -1446,7 +1507,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                       <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
                       {attributeSearchTerm && (
                         <button
-                          onClick={() => setAttributeSearchTerm('')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAttributeSearchTerm('');
+                          }}
                           className="absolute right-3 top-2.5"
                         >
                           <X className="w-4 h-4 text-gray-400" />
@@ -1485,7 +1549,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                                     type="checkbox"
                                     className="sr-only"
                                     checked={attributeFilters[attributeKey]?.includes(value) || false}
-                                    onChange={() => toggleAttributeFilter(attributeKey, value)}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      toggleAttributeFilter(attributeKey, value);
+                                    }}
                                   />
                                 </div>
                                 <div className="flex-1 flex items-center justify-between">
@@ -1589,7 +1656,8 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                             {(typeof selectedDress.sizes === 'string' ? JSON.parse(selectedDress.sizes) : selectedDress.sizes)?.map((size: string) => (
                               <button
                                 key={size}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setSelectedSizes(prev => ({
                                     ...prev,
                                     [sizeModalOpen]: size
@@ -1613,7 +1681,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                         
                         <div className="flex gap-3 mt-4">
                           <button
-                            onClick={() => setSizeModalOpen(null)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSizeModalOpen(null);
+                            }}
                             className="flex-1 py-2.5 relative text-[#B252FF] hover:text-[#F777F7] text-sm font-medium
                                      rounded-lg transition-colors duration-200 bg-white
                                      before:absolute before:inset-0 before:rounded-lg before:p-[1px]
@@ -1623,7 +1694,10 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
                             Cancel
                           </button>
                           <button
-                            onClick={() => addToCart(sizeModalOpen)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(sizeModalOpen);
+                            }}
                             disabled={!selectedSizes[sizeModalOpen] || addingToCart === sizeModalOpen}
                             className="flex-1 py-2.5 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-sm font-medium
                                      rounded-lg hover:opacity-90 transition-opacity duration-200
@@ -1648,6 +1722,23 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Friend Circle Share Modal */}
+      {selectedDressForShare && (
+        <ShareWithFriends
+          isOpen={shareModalOpen}
+          onClose={() => {
+            setShareModalOpen(false);
+            setSelectedDressForShare(null);
+          }}
+          itemId={selectedDressForShare.id}
+          itemName={selectedDressForShare.name}
+          itemImage={selectedDressForShare.image_url}
+          onSuccess={() => {
+            toast.success(`${selectedDressForShare.name} shared with your friends!`);
+          }}
+        />
       )}
     </div>
   );

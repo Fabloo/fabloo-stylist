@@ -94,25 +94,28 @@ export function SkinToneOptions() {
               </div>
             </div>
           </div>
+
+
+          <div className='fixed bottom-0 left-0 right-0 bg-white py-4'>
           
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
             Choose Your Method
           </h3>
           
           {/* Method Buttons */}
-          <div className="flex flex-row justify-center  gap-4 max-w-sm mx-auto">
+          <div className="flex flex-row justify-center items-center gap-4 max-w-sm mx-auto">
             <button
               onClick={() => {
                 console.log("Navigating to skin-tone-quiz with fromOptions: true");
                 navigate('/skin-tone-quiz', { state: { fromOptions: true } });
               }}
-              className="w-1/2 py-4 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-lg font-medium rounded-[12px] shadow-lg hover:shadow-xl transition-shadow"
+              className="w-1/2 py-3 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white text-lg font-medium rounded-[12px] shadow-lg hover:shadow-xl transition-shadow"
             >
               Start Quiz
             </button>
             
             <label className="block">
-              <div className="w-full py-4 px-2 flex items-center justify-center gap-2 bg-white border border-[#B252FF] text-[#B252FF] text-lg font-medium rounded-[12px] shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+              <div className="w-full py-3 px-2 flex items-center justify-center gap-2 bg-white border border-[#B252FF] text-[#B252FF] text-lg font-medium rounded-[12px] shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                 <Upload className="w-5 h-5" />
                 <span>Take Selfie</span>
               </div>
@@ -131,6 +134,7 @@ export function SkinToneOptions() {
                 capture="user"
               />
             </label>
+          </div>
           </div>
         </div>
       </div>

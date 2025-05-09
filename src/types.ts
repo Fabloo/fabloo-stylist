@@ -34,4 +34,14 @@ export type InventoryItem = {
   dress_type?: string[];
   created_at?: string;
   updated_at?: string;
-}; 
+};
+
+export interface Friend {
+  id: string;
+  user_id: string;
+  friend_name: string;
+  friend_phone: string;
+  friend_status: 'pending' | 'joined' | 'rejected';
+  created_at: string;
+  updated_at: string;
+} 

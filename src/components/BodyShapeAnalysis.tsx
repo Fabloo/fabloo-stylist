@@ -236,7 +236,7 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
           </h3>
 
           {/* Body Shape Grid */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-2 gap-4 mb-20">
             {/* Rectangle */}
             <div className="flex flex-col items-center">
               <div className="h-36 w-24 bg-[#FFF3EC] rounded-md mb-2 flex items-center justify-center">
@@ -298,8 +298,12 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
             </div>
           </div>
 
+        
+
+         <div className='fixed bottom-0 left-0 right-0 bg-white'>
+
           {/* Choose Method */}
-          <h3 className="text-lg font-semibold text-black text-center mb-5">
+          <h3 className="text-lg font-semibold text-black text-center mb-3">
             Choose Your Method
           </h3>
 
@@ -307,12 +311,12 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
           <div className="flex flex-row gap-4 max-w-xs pb-4 mx-auto">
             <button
               onClick={handleQuizStart}
-              className="w-full py-4 bg-[#D259FF] text-white text-base font-semibold rounded-lg"
+              className="w-full py-3 bg-[#D259FF] text-white text-base font-semibold rounded-lg"
             >
               Start Quiz
             </button>
 
-            <label className="w-full py-4 bg-white border border-[#D259FF] text-[#D259FF] text-base font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer">
+            <label className="w-full py-3 bg-white border border-[#D259FF] text-[#D259FF] text-base font-semibold rounded-lg flex items-center justify-center gap-2 cursor-pointer">
               <Upload className="w-5 h-5" />
               <span>Upload Photo</span>
               <input
@@ -329,6 +333,7 @@ export function BodyShapeAnalysis({ currentShape, onComplete }: Props) {
               {error}
             </div>
           )}
+        </div>
         </div>
       </div>
     );

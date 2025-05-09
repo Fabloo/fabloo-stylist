@@ -7,20 +7,30 @@ const supabase = createClient(
 )
 
 export async function updateUserRole(userId: string, newRole: string) {
-  const { data, error } = await supabase.auth.admin.updateUserById(
-    userId,
-    {
-      user_metadata: {
-        role: newRole,
-      },
+  try {
+    // Check if we have the service role key
+    if (!import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing service role key - cannot update user roles from the client');
+      throw new Error('Cannot update user roles from client-side code');
     }
-  )
-  console.log("data", data);
-  console.log("error", error);
+    
+    // Log the attempt for debugging
+    console.log(`Attempting to update user ${userId} to role: ${newRole}`);
+    
+    // Use regular update instead of admin.updateUserById which might require different permissions
+    const { data, error } = await supabase.auth.updateUser({
+      data: { role: newRole }
+    });
 
-  if (error) {
-    console.error('Error updating user metadata:', error)
-  } else {
-    console.log('User metadata updated:', data)
+    if (error) {
+      console.error('Error updating user metadata:', error);
+      throw error;
+    } else {
+      console.log('User metadata updated:', data);
+      return data;
+    }
+  } catch (err) {
+    console.error('Error updating user metadata:', err);
+    throw err;
   }
 }

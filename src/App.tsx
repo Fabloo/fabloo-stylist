@@ -20,6 +20,11 @@ import { GoogleTagManager } from './components/GoogleTagManager';
 import ColorWheel from './components/ColorWheel';
 import MetaPixel from './components/MetaPexel';
 import { supabase } from './lib/supabase';
+import { FriendCircleResults } from './pages/FriendCircleResults';
+import { FeedbackRequest } from './pages/FeedbackRequest';
+import { ProductReview } from './pages/ProductReview';
+import { ReviewSuccess } from './pages/ReviewSuccess';
+import { ShopPage } from './pages/ShopPage';
 
 type RecommendationsPageProps = {
   initialResults: {
@@ -483,11 +488,18 @@ function App() {
             }
           />
           
+          {/* Friend Circle and Reviews */}
+          <Route path="/friend-circle-results" element={<FriendCircleResults />} />
+          <Route path="/feedback/:id" element={<FeedbackRequest />} />
+          <Route path="/review/:itemId/:shareId" element={<ProductReview />} />
+          <Route path="/review-success/:itemId" element={<ReviewSuccess />} />
+          
           {/* Other Routes */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/shop" element={<ShopPage />} />
           <Route path="/admin" element={<AdminPanel />} />
         </Routes>
         </Layout>
