@@ -476,7 +476,10 @@ function App() {
           <Route
             path="/auth"
             element={
-              <Auth onSuccess={() => navigate('/recommendations')} />
+              <Auth onSuccess={() => {
+                // Default redirect will be to recommendations
+                navigate('/recommendations');
+              }} />
             }
           />
           <Route 

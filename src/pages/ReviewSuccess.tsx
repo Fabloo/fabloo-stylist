@@ -67,13 +67,13 @@ export function ReviewSuccess() {
             </p>
           </div>
           
-          <button
+          {/* <button
             onClick={() => navigate('/shop')}
             className="w-full py-3 border border-[#B252FF] text-[#B252FF] font-medium rounded-lg flex items-center justify-center gap-2"
           >
             <ShoppingBag className="w-4 h-4" />
             Continue Shopping
-          </button>
+          </button> */}
         </motion.div>
       </main>
 

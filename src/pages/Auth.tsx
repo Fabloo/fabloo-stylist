@@ -3,6 +3,7 @@ import { Phone, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { useAuth } from '../hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 
 type Props = {
   onSuccess: () => void;
@@ -13,13 +14,37 @@ export function Auth({ onSuccess }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const location = useLocation();
 
   const { isAuthenticated } = useAuth();
   const { setUser } = useAuthStore();
+  
+  // Save the intended destination if it exists in the URL
+  useEffect(() => {
+    // Check if there's a redirect parameter in the URL
+    const searchParams = new URLSearchParams(location.search);
+    const redirectPath = searchParams.get('redirect');
+    
+    if (redirectPath) {
+      // Store the redirect path in sessionStorage for later use
+      sessionStorage.setItem('auth_redirect', redirectPath);
+    }
+  }, [location]);
 
   useEffect(() => {
     if (isAuthenticated) {
-      onSuccess();
+      // Check if we have a saved redirect path
+      const savedRedirect = sessionStorage.getItem('auth_redirect');
+      
+      if (savedRedirect) {
+        // Clear the stored redirect to prevent future redirects
+        sessionStorage.removeItem('auth_redirect');
+        // Navigate to the saved path
+        window.location.href = savedRedirect;
+      } else {
+        // Default success callback
+        onSuccess();
+      }
     }
   }, [isAuthenticated, onSuccess]);
 

@@ -442,65 +442,46 @@ export function useFriendCircle() {
     }
   }, [isAuthenticated, user, tablesExist]);
   
-  const shareWithFriend = useCallback(async (
-    friendId: string, 
-    itemId: string, 
-    comment?: string
-  ) => {
-    if (!isAuthenticated || !user) {
-      setError('You must be logged in to share items');
-      return null;
+  const shareWithFriend = useCallback(async (friendId: string, itemId: string, comment?: string) => {
+    if (!isAuthenticated || !user || !tablesExist) {
+      throw new Error('User must be authenticated to share items');
     }
-    
-    if (!tablesExist) {
-      setError('Friend circle functionality is not available. Please run the database migrations.');
-      return null;
-    }
-    
-    setLoading(true);
-    setError(null);
     
     try {
+      // First fetch the friend's details
+      const { data: friendData, error: friendError } = await supabase
+        .from('friend_circles')
+        .select('friend_name, friend_phone')
+        .eq('id', friendId)
+        .single();
+        
+      if (friendError) throw friendError;
+      
+      if (!friendData) {
+        throw new Error('Friend not found');
+      }
+      
+      // Create a shared item record without reviewer_info
       const { data, error } = await supabase
         .from('shared_items')
         .insert({
           sender_id: user.id,
           friend_circle_id: friendId,
           item_id: itemId,
-          comment: comment || null,
-          response_status: 'pending',
+          comment: comment,
+          response_status: 'pending'
         })
-        .select()
+        .select('id')
         .single();
         
       if (error) throw error;
       
-      // Update local state with the new shared item + friend details
-      const friend = friends.find(f => f.id === friendId);
-      
-      if (friend) {
-        const newSharedItem: SharedItem = {
-          ...data,
-          friend_name: friend.friend_name,
-          friend_phone: friend.friend_phone,
-        };
-        
-        setSharedItems(prev => [newSharedItem, ...prev]);
-      }
-      
-      // Show success toast
-      toast.success('Item shared successfully');
-      
-      return data;
+      return data.id;
     } catch (err) {
-      console.error('Error sharing item:', err);
-      setError(err instanceof Error ? err.message : 'Failed to share item');
-      toast.error(err instanceof Error ? err.message : 'Failed to share item');
-      return null;
-    } finally {
-      setLoading(false);
+      console.error('Error sharing with friend:', err);
+      throw err;
     }
-  }, [isAuthenticated, user, friends, tablesExist]);
+  }, [isAuthenticated, user, tablesExist]);
   
   // Fetch friends and shared items when authenticated
   useEffect(() => {

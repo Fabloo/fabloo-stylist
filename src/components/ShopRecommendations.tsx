@@ -10,6 +10,7 @@ import { useWishlist } from '../hooks/useWishlist';
 import { toast } from 'react-toastify';
 import { ShareWithFriends } from './ShareWithFriends';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 type Props = {
   bodyShape: BodyShape;
   skinTone: SkinTone;
@@ -887,6 +888,18 @@ export function ShopRecommendations({ bodyShape, skinTone }: Props) {
           <div className="text-center text-[#212121] text-[24px] font-semibold leading-[24px]  font-poppins mb-3">
             AI Stylist Recommended Picks
           </div>
+
+          {isAuthenticated && (
+        <div className="fixed top-16 right-4 z-40">
+          <Link
+            to="/friend-circle-results"
+            className="flex items-center gap-2 px-4 py-2 bg-white shadow-md rounded-full text-sm font-medium text-gray-800 hover:bg-gray-50"
+          >
+            <Users className="w-4 h-4 text-purple-600" />
+            Style Circle
+          </Link>
+        </div>
+      )}
 
           {/* Filter Tabs */}
           <div className="flex gap-2 mb-3 overflow-x-auto pb-2">

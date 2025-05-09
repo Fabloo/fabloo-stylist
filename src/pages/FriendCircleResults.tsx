@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { useFriendCircle } from '../hooks/useFriendCircle';
-import { ChevronRight, Star, ShoppingBag } from 'lucide-react';
+import { ChevronRight, Star, ShoppingBag, MessageSquare } from 'lucide-react';
 
 // Define interfaces for the components
 interface FeedbackItem {
@@ -17,6 +17,15 @@ interface FeedbackItem {
   item_image: string;
 }
 
+interface GroupedFeedback {
+  item_id: string;
+  item_name: string;
+  item_image: string;
+  feedback_count: number;
+  avg_rating: number;
+  feedback: FeedbackItem[];
+}
+
 export function FriendCircleResults() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
@@ -24,6 +33,50 @@ export function FriendCircleResults() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+
+  // Group feedback by item
+  const groupedFeedback = useMemo(() => {
+    const grouped: Record<string, GroupedFeedback> = {};
+    
+    feedback.forEach(item => {
+      if (!grouped[item.item_id]) {
+        grouped[item.item_id] = {
+          item_id: item.item_id,
+          item_name: item.item_name,
+          item_image: item.item_image,
+          feedback_count: 0,
+          avg_rating: 0,
+          feedback: []
+        };
+      }
+      
+      grouped[item.item_id].feedback.push(item);
+      grouped[item.item_id].feedback_count += 1;
+      grouped[item.item_id].avg_rating += item.rating;
+    });
+    
+    // Calculate average ratings
+    Object.values(grouped).forEach(group => {
+      group.avg_rating = group.avg_rating / group.feedback_count;
+    });
+    
+    return Object.values(grouped);
+  }, [feedback]);
+
+  // Auto-select the first item if nothing is selected
+  useEffect(() => {
+    if (groupedFeedback.length > 0 && !selectedItemId) {
+      setSelectedItemId(groupedFeedback[0].item_id);
+    }
+  }, [groupedFeedback, selectedItemId]);
+
+  // Get the selected item's feedback
+  const selectedItemFeedback = useMemo(() => {
+    if (!selectedItemId) return [];
+    const selected = groupedFeedback.find(item => item.item_id === selectedItemId);
+    return selected ? selected.feedback : [];
+  }, [selectedItemId, groupedFeedback]);
 
   useEffect(() => {
     // Check authentication
@@ -187,55 +240,121 @@ export function FriendCircleResults() {
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {feedback.map((item) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="p-4 bg-white rounded-xl shadow-sm border border-gray-100"
-              >
-                <div className="flex items-start gap-3">
+          <div className="space-y-6">
+            {/* Items Carousel */}
+            <div className="overflow-x-auto pb-4 -mx-4 px-4">
+              <div className="flex gap-3">
+                {groupedFeedback.map((group) => (
                   <div 
-                    className="w-12 h-12 rounded-md bg-gray-100 flex-shrink-0"
-                    style={{
-                      backgroundImage: item.item_image ? `url(${item.item_image})` : 'none',
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    }}
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{item.friend_name}</h3>
-                        <p className="text-xs text-gray-500 mb-1">on {item.item_name}</p>
-                      </div>
-                      <div className="flex items-center">
+                    key={group.item_id}
+                    onClick={() => setSelectedItemId(group.item_id)}
+                    className={`flex-shrink-0 w-20 cursor-pointer transition-all ${selectedItemId === group.item_id ? 'scale-105' : 'opacity-70'}`}
+                  >
+                    <div 
+                      className={`w-20 h-20 rounded-lg bg-gray-100 mb-1 border-2 ${selectedItemId === group.item_id ? 'border-purple-500' : 'border-transparent'}`}
+                      style={{
+                        backgroundImage: group.item_image ? `url(${group.item_image})` : 'none',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }}
+                    />
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-1">
                         {Array(5).fill(0).map((_, i) => (
                           <Star 
                             key={i} 
-                            size={14} 
-                            className={i < item.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} 
+                            size={10} 
+                            className={i < Math.round(group.avg_rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} 
                           />
                         ))}
                       </div>
+                      <p className="text-xs font-medium truncate">{group.item_name}</p>
+                      <p className="text-[10px] text-gray-500">{group.feedback_count} {group.feedback_count === 1 ? 'opinion' : 'opinions'}</p>
                     </div>
-                    <p className="text-gray-600 text-sm mt-1">{item.message}</p>
-                    <div className="mt-2 text-right">
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Selected Item Details */}
+            {selectedItemId && (
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-2xl">
+                {groupedFeedback.map(group => group.item_id === selectedItemId && (
+                  <div key={group.item_id} className="flex gap-4 items-center">
+                    <div 
+                      className="w-24 h-24 rounded-lg bg-white shadow-sm"
+                      style={{
+                        backgroundImage: group.item_image ? `url(${group.item_image})` : 'none',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }}
+                    />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 text-lg">{group.item_name}</h3>
+                      <div className="flex items-center mt-1 mb-2">
+                        {Array(5).fill(0).map((_, i) => (
+                          <Star 
+                            key={i} 
+                            size={16} 
+                            className={i < Math.round(group.avg_rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} 
+                          />
+                        ))}
+                        <span className="text-sm text-gray-600 ml-2">{group.avg_rating.toFixed(1)}</span>
+                      </div>
                       <button 
-                        onClick={() => navigate(`/product/${item.item_id}`)}
-                        className="text-xs text-purple-600 font-medium"
+                        onClick={() => navigate(`/product/${group.item_id}`)}
+                        className="text-xs px-3 py-1.5 rounded-full bg-white text-purple-600 font-medium shadow-sm"
                       >
                         View Item
                       </button>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                ))}
+              </div>
+            )}
+            
+            {/* Feedback List for Selected Item */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium text-gray-700 flex items-center">
+                  <MessageSquare size={16} className="mr-1 text-purple-500" /> 
+                  Feedback
+                </h3>
+                <span className="text-xs text-gray-500">{selectedItemFeedback.length} {selectedItemFeedback.length === 1 ? 'opinion' : 'opinions'}</span>
+              </div>
+              
+              <div className="space-y-3">
+                {selectedItemFeedback.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="p-4 bg-white rounded-xl shadow-sm border border-gray-100"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between">
+                          <h3 className="font-medium text-gray-900">{item.friend_name}</h3>
+                          <div className="flex items-center">
+                            {Array(5).fill(0).map((_, i) => (
+                              <Star 
+                                key={i} 
+                                size={12} 
+                                className={i < item.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} 
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-gray-600 text-sm mt-1.5">{item.message}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
 
-            <div className="pt-8 pb-4 text-center">
+            <div className="pt-6 pb-4 text-center">
               <button
                 onClick={() => navigate('/shop')}
                 className="w-full py-3 bg-gradient-to-r from-[#B252FF] to-[#F777F7] text-white font-medium rounded-lg flex items-center justify-center gap-1"

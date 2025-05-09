@@ -17,6 +17,14 @@ export async function updateUserRole(userId: string, newRole: string) {
     // Log the attempt for debugging
     console.log(`Attempting to update user ${userId} to role: ${newRole}`);
     
+    // Check if user is authenticated first
+    const { data: sessionData } = await supabase.auth.getSession();
+    
+    if (!sessionData.session) {
+      console.warn('No active auth session, skipping user role update');
+      return null; // Return null instead of throwing an error
+    }
+    
     // Use regular update instead of admin.updateUserById which might require different permissions
     const { data, error } = await supabase.auth.updateUser({
       data: { role: newRole }
@@ -31,6 +39,11 @@ export async function updateUserRole(userId: string, newRole: string) {
     }
   } catch (err) {
     console.error('Error updating user metadata:', err);
+    // Don't rethrow the error if it's an auth session missing error
+    if (err instanceof Error && err.message.includes('Auth session missing')) {
+      console.warn('Auth session is missing, skipping user update');
+      return null;
+    }
     throw err;
   }
 }

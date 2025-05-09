@@ -72,22 +72,102 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
     setShareError(null);
     
     try {
-      // Share with each selected friend
-      const sharePromises = selectedFriends.map(friendId => 
-        shareWithFriend(friendId, itemId, comment)
-      );
+      const selectedFriendsDetails = [];
+      const sharePromises = [];
+      let commonReviewLink = '';
       
-      await Promise.all(sharePromises);
+      // First, create a single shared_item record for this batch share
+      const { data: sharedItem, error: shareError } = await supabase
+        .from('shared_items')
+        .insert({
+          sender_id: user?.id,
+          item_id: itemId,
+          comment: comment || `Check out this ${itemName} from Fabloo Stylist!`,
+          response_status: 'pending'
+          // No specific friend_circle_id since this is going to multiple friends
+        })
+        .select('id')
+        .single();
+        
+      if (shareError) {
+        console.error('Error creating shared item:', shareError);
+        setShareError('Error creating shared item in database');
+        setProcessingShare(false);
+        return;
+      }
       
+      if (!sharedItem || !sharedItem.id) {
+        console.error('No valid shared item ID was created');
+        setShareError('Could not create a valid share ID');
+        setProcessingShare(false);
+        return;
+      }
+      
+      // Generate a common review link with the shared item ID
+      commonReviewLink = `${window.location.origin}/review/${itemId}/${sharedItem.id}`;
+      
+      // Collect phone numbers of selected friends
+      for (const friendId of selectedFriends) {
+        const friend = friends.find(f => f.id === friendId);
+        if (!friend) continue;
+        
+        selectedFriendsDetails.push(friend);
+        
+        // Create a record in the database to track this friend's response
+        const { data: friendShare, error: friendShareError } = await supabase
+          .from('friend_shares')
+          .insert({
+            shared_item_id: sharedItem.id,
+            friend_circle_id: friendId,
+            response_status: 'pending'
+          });
+          
+        if (friendShareError) {
+          console.error('Error tracking friend share:', friendShareError);
+          // Continue anyway as this is just for tracking
+        }
+      }
+      
+      // Create a message with all friend names
+      const friendNames = selectedFriendsDetails.map(f => f.friend_name).join(', ');
+      
+      // If it's a single friend, we can create a direct message
+      // If multiple friends, we'll offer options
+      if (selectedFriendsDetails.length === 1) {
+        // Direct message to one friend
+        const friend = selectedFriendsDetails[0];
+        const message = encodeURIComponent(`${comment || `Check out this ${itemName} from Fabloo Stylist!`} ${commonReviewLink}?name=${encodeURIComponent(friend.friend_name)}&phone=${encodeURIComponent(friend.friend_phone)}`);
+        const whatsappUrl = `https://wa.me/${friend.friend_phone}?text=${message}`;
+        
+        // Open WhatsApp in a new tab
+        window.open(whatsappUrl, '_blank');
+      } else {
+        // For multiple friends, we have a few options:
+        
+        // Option 1: Create a message for WhatsApp group (user creates/selects group)
+        const groupMessage = encodeURIComponent(`${comment || `Check out this ${itemName} from Fabloo Stylist!`} I'm sharing this with ${friendNames}. What do you all think? ${commonReviewLink}`);
+        const whatsappGroupUrl = `https://wa.me/?text=${groupMessage}`;
+        
+        // Open WhatsApp with the group message
+        window.open(whatsappGroupUrl, '_blank');
+        
+        // Also provide the ability to copy the link for sharing in other ways
+        await navigator.clipboard.writeText(`${comment || `Check out this ${itemName} from Fabloo Stylist!`} I'm sharing this with ${friendNames}. What do you all think? ${commonReviewLink}`);
+        toast.success("Link also copied to clipboard!", { duration: 5000 });
+      }
+      
+      // Mark as success
       setShareSuccess(true);
       if (onSuccess) {
         onSuccess();
       }
       
+      toast.success(`Shared with ${selectedFriends.length} ${selectedFriends.length === 1 ? 'friend' : 'friends'}!`);
+      
       // Close modal after success
       setTimeout(() => {
         onClose();
-      }, 1500);
+      }, 2000);
     } catch (err) {
       console.error('Error sharing with friends:', err);
       setShareError(err instanceof Error ? err.message : 'Failed to share with friends');
@@ -110,7 +190,7 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
         });
         
         // Generate a simple link without storing in database
-        const productLink = `${window.location.origin}/product/${itemId}`;
+        const productLink = `${window.location.origin}product/${itemId}`;
         const shareText = `Check out this ${itemName} from Fabloo Stylist! What do you think? ${productLink}`;
         
         // Try to use the Web Share API
@@ -160,7 +240,7 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
       if (shareError) {
         console.error('Error creating shared item:', shareError);
         // Fall back to simple sharing without database tracking
-        const productLink = `${window.location.origin}/product/${itemId}`;  // Use product link as fallback
+        const productLink = `${window.location.origin}product/${itemId}`;  // Use product link as fallback
         const shareText = `Check out this ${itemName} from Fabloo Stylist! What do you think? ${productLink}`;
         
         if (navigator.share) {
@@ -192,7 +272,7 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
       if (!sharedItem || !sharedItem.id) {
         console.error('No valid shared item ID was created', sharedItem);
         // Fall back to simple sharing
-        const productLink = `${window.location.origin}/product/${itemId}`;
+        const productLink = `${window.location.origin}product/${itemId}`;
         const shareText = `Check out this ${itemName} from Fabloo Stylist! What do you think? ${productLink}`;
         
         if (navigator.share) {
@@ -217,7 +297,7 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
       if (typeof sharedItem.id !== 'string' || sharedItem.id.length < 10) {
         console.error('Invalid share ID format:', sharedItem.id);
         // Fall back to simple sharing
-        const productLink = `${window.location.origin}/product/${itemId}`;
+        const productLink = `${window.location.origin}product/${itemId}`;
         const shareText = `Check out this ${itemName} from Fabloo Stylist! What do you think? ${productLink}`;
         
         if (navigator.share) {
@@ -278,7 +358,7 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
       
       // Fallback to simple sharing
       try {
-        const productLink = `${window.location.origin}/product/${itemId}`;
+        const productLink = `${window.location.origin}product/${itemId}`;
         const shareText = `Check out this ${itemName} from Fabloo Stylist! What do you think? ${productLink}`;
         
         if (navigator.share) {
@@ -311,7 +391,7 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
         });
         
         // Generate a simple link without storing in database
-        const productLink = `${window.location.origin}/product/${itemId}`;
+        const productLink = `${window.location.origin}product/${itemId}`;
         const shareText = encodeURIComponent(`Check out this ${itemName} from Fabloo Stylist! What do you think? ${productLink}`);
         
         // Open WhatsApp with prefilled message
@@ -351,7 +431,7 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
       if (shareError) {
         console.error('Error creating shared item:', shareError);
         // Fall back to simple sharing without database tracking
-        const productLink = `${window.location.origin}/product/${itemId}`;  // Use product link as fallback
+        const productLink = `${window.location.origin}product/${itemId}`;  // Use product link as fallback
         const shareText = encodeURIComponent(`Check out this ${itemName} from Fabloo Stylist! What do you think? ${productLink}`);
         
         window.open(`https://wa.me/?text=${shareText}`, '_blank');
@@ -373,7 +453,7 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
       if (!sharedItem || !sharedItem.id) {
         console.error('No valid shared item ID was created', sharedItem);
         // Fall back to simple sharing
-        const productLink = `${window.location.origin}/product/${itemId}`;
+        const productLink = `${window.location.origin}product/${itemId}`;
         const shareText = encodeURIComponent(`Check out this ${itemName} from Fabloo Stylist! What do you think? ${productLink}`);
         
         window.open(`https://wa.me/?text=${shareText}`, '_blank');
@@ -395,7 +475,7 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
       if (typeof sharedItem.id !== 'string' || sharedItem.id.length < 10) {
         console.error('Invalid share ID format:', sharedItem.id);
         // Fall back to simple sharing
-        const productLink = `${window.location.origin}/product/${itemId}`;
+        const productLink = `${window.location.origin}product/${itemId}`;
         const shareText = encodeURIComponent(`Check out this ${itemName} from Fabloo Stylist! What do you think? ${productLink}`);
         
         window.open(`https://wa.me/?text=${shareText}`, '_blank');
@@ -438,7 +518,7 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
       
       // Fallback to simple sharing
       try {
-        const productLink = `${window.location.origin}/product/${itemId}`;
+        const productLink = `${window.location.origin}product/${itemId}`;
         const shareText = encodeURIComponent(`Check out this ${itemName} from Fabloo Stylist! What do you think? ${productLink}`);
         window.open(`https://wa.me/?text=${shareText}`, '_blank');
       } catch (fallbackErr) {
@@ -496,9 +576,9 @@ export function ShareWithFriends({ isOpen, onClose, itemId, itemName, itemImage,
                 <div className="mx-auto flex items-center justify-center w-16 h-16 bg-green-50 rounded-full mb-4">
                   <CheckCheck className="w-8 h-8 text-green-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Thank You!</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Shared Successfully!</h3>
                 <p className="text-gray-600 mb-6">
-                  For the lovely participation
+                  Your item has been shared via WhatsApp with your selected friends
                 </p>
                 <button
                   onClick={onClose}
