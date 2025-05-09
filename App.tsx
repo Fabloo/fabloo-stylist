@@ -1,16 +1,16 @@
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import { Layout } from './components/Layout';
-import { BodyShapeAnalysis } from './components/BodyShapeAnalysis';
-import { SkinToneOptions } from './components/SkinToneOptions';
-import { SkinToneAnalysis } from './components/SkinToneAnalysis';
-import { SkinToneDetector } from './components/SkinToneDetector';
-import SkinToneRecommendations from './components/SkinToneRecommendations';
-import { FriendCircleResults } from './pages/FriendCircleResults';
-import { ProductReview } from './pages/ProductReview';
-import { ReviewSuccess } from './pages/ReviewSuccess';
+import { Layout } from './src/components/Layout';
+import { BodyShapeAnalysis } from './src/components/BodyShapeAnalysis';
+import { SkinToneOptions } from './src/components/SkinToneOptions';
+import { SkinToneAnalysis } from './src/components/SkinToneAnalysis';
+import { SkinToneDetector } from './src/components/SkinToneDetector';
+import SkinToneRecommendations from './src/components/SkinToneRecommendations';
+import { FriendCircleResults } from './src/pages/FriendCircleResults';
+import { ProductReview } from './src/pages/ProductReview';
+import { ReviewSuccess } from './src/pages/ReviewSuccess';
 import { useState } from 'react';
-import { GoogleTagManager } from './components/GoogleTagManager';
-import { MetaPixel } from './components/MetaPixel';
+import { GoogleTagManager } from './src/components/GoogleTagManager';
+import MetaPixel from './src/components/MetaPexel';
 import { ErrorBoundary } from 'react-error-boundary';
 import React from 'react';
 

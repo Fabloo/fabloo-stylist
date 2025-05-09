@@ -28,7 +28,7 @@ export function FriendCircleResults() {
   useEffect(() => {
     // Check authentication
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/auth');
       return;
     }
 

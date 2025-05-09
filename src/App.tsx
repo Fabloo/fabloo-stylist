@@ -297,7 +297,7 @@ function LandingPage() {
         <img 
           src="https://res.cloudinary.com/dmafmaoif/image/upload/v1746689517/Frame_2147228338_rvpynr.svg"
           alt="Fabloo app screenshot"
-          className="relative z-10 h-auto w-auto  transform hover:scale-[1.02] transition-transform duration-500"
+          className="relative z-10 w-full  transform hover:scale-[1.02] transition-transform duration-500"
           loading="lazy"
         />
       </div>
