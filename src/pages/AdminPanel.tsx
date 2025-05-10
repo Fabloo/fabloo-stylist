@@ -3,6 +3,7 @@ import { Package, RefreshCcw, Search, CheckCircle, XCircle, Filter, Upload, Down
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { useNavigate } from 'react-router-dom';
+import Papa from 'papaparse';
 
 type Order = {
   id: string;
@@ -109,7 +110,7 @@ interface DBInventoryItem {
 }
 
 export function AdminPanel() {
-  const { isAdmin, user } = useAuthStore();
+  const { isAdmin, user, isLoading: authLoading } = useAuthStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'orders' | 'returns' | 'inventory'>('orders');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -127,10 +128,12 @@ export function AdminPanel() {
   const [showUploadGuide, setShowUploadGuide] = useState(false);
   const [uploadFormat, setUploadFormat] = useState<any>(null);
   const [fileProcessing, setFileProcessing] = useState(false);
-  const [authChecking, setAuthChecking] = useState(true);
 
-  console.log("user", user);
-  console.log("isAdmin", isAdmin);
+  useEffect(() => {
+    if (!authLoading && (!user || !isAdmin)) {
+      navigate('/');
+    }
+  }, [user, isAdmin, authLoading, navigate]);
 
   useEffect(() => {
     fetchBrands();
@@ -170,25 +173,6 @@ export function AdminPanel() {
       console.error('Error fetching upload format:', err);
     }
   };
-
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      await useAuthStore.getState().checkAuth();
-      setAuthChecking(false);
-    };
-    
-    checkAuthentication();
-  }, []);
-  
-
-  useEffect(() => {
-    if (!authChecking && (!user || user?.user_metadata?.role !== 'admin')) {
-      console.log("not admin");
-      console.log(user);
-      console.log(user?.role);
-      console.log(authChecking);
-    }
-  }, [user, authChecking, navigate]);
 
   useEffect(() => {
     if (activeTab === 'orders') {
@@ -293,7 +277,7 @@ export function AdminPanel() {
       if (editingItem) {
         // Update existing item
         const { error: itemError } = await supabase
-          .from('inventory_items')
+            .from('inventory_items')
           .update({
             name: itemData.name,
             description: itemData.description,
@@ -319,10 +303,10 @@ export function AdminPanel() {
           .eq('item_id', editingItem.id);
 
         if (attrError) throw attrError;
-      } else {
-        // Insert new item
+          } else {
+            // Insert new item
         const { data: newItem, error: itemError } = await supabase
-          .from('inventory_items')
+              .from('inventory_items')
           .insert([{
             name: itemData.name,
             description: itemData.description,
@@ -333,8 +317,8 @@ export function AdminPanel() {
             image_url_3: itemData.image_url_3,
             brand_id: itemData.brand_id
           }])
-          .select()
-          .single();
+              .select()
+              .single();
 
         if (itemError) throw itemError;
         if (!newItem) throw new Error('Failed to insert inventory item');
@@ -342,7 +326,7 @@ export function AdminPanel() {
         // Insert item attributes
         const { error: attrError } = await supabase
           .from('item_attributes')
-          .insert([{
+                .insert([{
             item_id: newItem.id,
             body_shapes: itemData.body_shapes,
             color_tones: itemData.color_tones,
@@ -474,261 +458,395 @@ export function AdminPanel() {
   });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isAdmin) {
-      setUploadError('Admin access required');
-      return;
-    }
+    if (!e.target.files?.length) return;
 
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files[0];
     setFileProcessing(true);
-
-    // Reset status messages
     setUploadError(null);
     setUploadSuccess(null);
 
-    // Validate file type
-    if (file.type !== 'text/csv') {
-      setUploadError('Please upload a CSV file');
-      setFileProcessing(false);
-      return;
-    }
-
     try {
       const text = await file.text();
-      const rows = text.split('\n').map(row => {
-        // Split by comma but preserve commas within quotes
-        const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-        return matches.map(cell => {
-          // Remove quotes and trim
-          cell = cell.trim().replace(/^"|"$/g, '');
-          // Handle empty cells
-          return cell === '' ? null : cell;
-        });
-      });
-
-      // Define required fields
-      const requiredFields = ['name', 'description', 'price', 'image_url', 'sizes', 
-                             'body_shapes', 'color_tones', 'dress_type', 'stock', 'brand_name', 'dress_attributes'];
-
-      // Validate header row
-      const headers = rows[0];
-      const missingFields = requiredFields.filter(field => !headers.includes(field));
-      if (missingFields.length > 0) {
-        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+      let items: any[];
+      
+      // Determine file type and parse accordingly
+      if (file.name.toLowerCase().endsWith('.json')) {
+        try {
+          items = JSON.parse(text);
+          if (!Array.isArray(items)) {
+            throw new Error('JSON file must contain an array of items');
+          }
+        } catch (error) {
+          throw new Error('Invalid JSON format. Please ensure the file contains valid JSON data.');
+        }
+      } else if (file.name.toLowerCase().endsWith('.csv')) {
+        try {
+          // Use PapaParse for more robust CSV parsing
+          const parseResult = Papa.parse(text, {
+            header: true,
+            skipEmptyLines: 'greedy', // Skip empty rows more aggressively
+            transformHeader: (header) => header.trim().toLowerCase(), // Clean up and normalize headers
+            transform: (value) => {
+              // Clean up cell values
+              if (typeof value === 'string') {
+                value = value.trim();
+                // Convert empty strings to null
+                if (value === '') return null;
+              }
+              return value;
+            }
+          });
+          
+          if (parseResult.errors && parseResult.errors.length > 0) {
+            console.warn('CSV parsing warnings:', parseResult.errors);
+          }
+          
+          // Log the parsed data for debugging
+          console.log('Parsed CSV data:', parseResult.data);
+          
+          items = parseResult.data.filter(item => {
+            // Skip completely empty rows
+            const hasAnyValue = Object.values(item as Record<string, unknown>).some(val => val !== null && val !== '');
+            return hasAnyValue;
+          });
+        } catch (error) {
+          console.error('CSV parsing error:', error);
+          throw new Error('Invalid CSV format. Please check the file structure and try again.');
+        }
+      } else {
+        throw new Error('Unsupported file format. Please upload a .json or .csv file.');
       }
 
-      // Process each row
-      const items: CSVInventoryItem[] = [];
-      for (let i = 1; i < rows.length; i++) {
-        if (rows[i].length === 1 && !rows[i][0]) continue; // Skip empty rows
-        
-        const row = rows[i];
-        if (row.length !== headers.length) {
-          throw new Error(`Invalid number of columns in row ${i + 1}`);
-        }
-
-        const item: CSVInventoryItem = {};
-        headers.forEach((header: string | null, index: number) => {
-          if (!header) return;
-          
-          const rawValue = row[index];
-          if (!rawValue && requiredFields.includes(header)) {
-            throw new Error(`Missing required value for ${header} at row ${i + 1}`);
+      // Filter out empty items and validate required fields
+      items = items.filter(item => {
+        // Clean up the item data
+        Object.keys(item).forEach(key => {
+          if (item[key] === undefined || item[key] === null || item[key] === '') {
+            item[key] = null;
+          } else if (typeof item[key] === 'string') {
+            item[key] = item[key].trim();
           }
-
-          // Ensure we have a string to work with
-          const stringValue = String(rawValue || '').trim();
-          let value: any = stringValue;
-
-          // Handle image URLs
-          if (header === 'image_url') {
-            // Split image URLs by semicolon and get the first one as main image
-            const imageUrls = stringValue.split(';').map(url => url.trim()).filter(Boolean);
-            value = imageUrls[0] || '';
-            if (imageUrls[1]) item['image_url_2'] = imageUrls[1];
-            if (imageUrls[2]) item['image_url_3'] = imageUrls[2];
-          }
-          
-          // Handle arrays
-          else if (['body_shapes', 'sizes', 'color_tones', 'dress_type'].includes(header)) {
-            value = stringValue ? stringValue.split(';').filter(Boolean).map(val => val.trim()) : [];
-          }
-          
-          // Handle dress attributes
-          else if (header === 'dress_attributes') {
-            try {
-              if (!stringValue) {
-                throw new Error('Dress attributes cannot be empty');
-              }
-              
-              // Parse the JSON string and validate the structure
-              const parsedAttrs = JSON.parse(stringValue.replace(/\n/g, ''));
-              const requiredAttrs = [
-                'fabric', 'length', 'primary_colour', 'primary_shades',
-                'pattern', 'neck', 'occasion', 'print', 'shape',
-                'sleeve_length', 'sleeve_styling'
-              ];
-              
-              // Validate all required fields are present
-              const missingAttrs = requiredAttrs.filter(attr => !(attr in parsedAttrs));
-              if (missingAttrs.length > 0) {
-                throw new Error(`Missing dress attributes: ${missingAttrs.join(', ')}`);
-              }
-
-              // Convert single values to arrays where needed
-              const arrayFields = ['fabric', 'primary_colour', 'pattern', 'neck', 'occasion', 'print', 'shape'];
-              arrayFields.forEach(field => {
-                const fieldValue = parsedAttrs[field];
-                if (fieldValue && !Array.isArray(fieldValue)) {
-                  parsedAttrs[field] = [fieldValue];
-                }
-              });
-              
-              // Ensure primary_shades is always an array
-              if (!Array.isArray(parsedAttrs.primary_shades)) {
-                parsedAttrs.primary_shades = parsedAttrs.primary_shades ? [parsedAttrs.primary_shades] : [];
-              }
-              
-              // Keep the original string value for storage
-              value = stringValue;
-              
-              // Store parsed attributes separately
-              item.parsedDressAttributes = parsedAttrs as DressAttributes;
-            } catch (error) {
-              const err = error as Error;
-              throw new Error(`Invalid dress attributes JSON at row ${i + 1}: ${err.message}`);
-            }
-          }
-          
-          // Convert numeric values
-          else if (header === 'price' || header === 'stock') {
-            const num = Number(value);
-            if (isNaN(num)) {
-              throw new Error(`Invalid number in ${header} at row ${i + 1}`);
-            }
-            value = num;
-          }
-
-          item[header] = value;
         });
 
-        items.push(item);
+        // Check if item has any non-empty values
+        const hasValues = Object.values(item).some(value => 
+          value !== null && value !== '' &&
+          (Array.isArray(value) ? value.length > 0 : true)
+        );
+
+        // Skip header-like rows
+        const possibleHeaderRow = Object.entries(item).some(([key, value]) => {
+          return typeof value === 'string' && 
+                 key.toLowerCase().trim() === value.toLowerCase().trim();
+        });
+        
+        if (possibleHeaderRow) {
+          console.warn('Skipping header-like row:', item);
+          return false;
+        }
+
+        return hasValues;
+      });
+
+      // Log filtered items for debugging
+      console.log('Filtered items:', items);
+
+      if (items.length === 0) {
+        throw new Error('No valid items found in the file. Please check that the CSV format matches the template.');
+      }
+
+      // Process each item
+      const processedItems: CSVInventoryItem[] = [];
+      const errors: string[] = [];
+      
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        try {
+          // Handle required fields
+          const name = item.name?.toString().trim();
+          const description = item.description?.toString().trim();
+          let price = 0;
+          
+          if (typeof item.price === 'number') {
+            price = item.price;
+          } else if (typeof item.price === 'string') {
+            // Remove currency symbols and convert to number
+            price = parseFloat(item.price.replace(/[^0-9.-]+/g, '')) || 0;
+          }
+          
+          let stock = 0;
+          if (typeof item.stock === 'number') {
+            stock = Math.max(0, Math.floor(item.stock)); // Ensure non-negative integer
+          } else if (typeof item.stock === 'string') {
+            stock = parseInt(item.stock.trim()) || 0;
+          }
+
+          // Validate required fields
+          const validationErrors = [];
+          if (!name) validationErrors.push('name is required');
+          if (!description) validationErrors.push('description is required');
+          if (price <= 0) validationErrors.push('price must be greater than 0');
+          if (stock < 0) validationErrors.push('stock cannot be negative');
+
+          if (validationErrors.length > 0) {
+            errors.push(`Row ${i + 1}: ${validationErrors.join(', ')}`);
+            console.warn(`Skipping row ${i + 1} due to validation errors:`, {
+              row: item,
+              errors: validationErrors
+            });
+            continue;
+          }
+
+          // Handle arrays with different possible separators
+          const parseArrayField = (field: any): string[] => {
+            if (!field) return [];
+            if (Array.isArray(field)) return field.map(f => String(f).trim()).filter(Boolean);
+            
+            // Try different separators
+            const separators = [';', ',', '|', '/'];
+            for (const separator of separators) {
+              if (String(field).includes(separator)) {
+                return String(field).split(separator).map(s => s.trim()).filter(Boolean);
+              }
+            }
+            
+            // If no separators found, treat as single item
+            const value = String(field).trim();
+            return value ? [value] : [];
+          };
+
+          // Parse dress attributes and type
+          let processedDressType: string[] = [];
+          let processedDressAttrs: any = {};
+
+          // First check if dress_type contains a JSON object
+          if (item.dress_type && typeof item.dress_type === 'string' && 
+              (item.dress_type.includes('{') || item.dress_type.includes('['))) {
+            try {
+              // Try to parse it as JSON if it looks like JSON
+              let dressTypeObj;
+              const cleanedJson = item.dress_type
+                .replace(/^\s*["']?\s*{/g, '{')
+                .replace(/}\s*["']?\s*$/g, '}')
+                .replace(/([{,])\s*['"]?([^"'{}:,]+)['"]?\s*:/g, '$1"$2":') // Fix keys
+                .replace(/:\s*['"]([^"',{}]+)['"]\s*([,}])/g, ':"$1"$2'); // Fix values
+                
+              dressTypeObj = JSON.parse(cleanedJson);
+              
+              // If it contains a types array, use that as dress_type
+              if (dressTypeObj.types && Array.isArray(dressTypeObj.types)) {
+                processedDressType = dressTypeObj.types;
+              }
+              
+              // If it contains attributes, use that for dress_attributes
+              if (dressTypeObj.attributes && typeof dressTypeObj.attributes === 'object') {
+                processedDressAttrs = dressTypeObj.attributes;
+              }
+            } catch (e) {
+              console.warn(`Failed to parse JSON in dress_type for item ${name}:`, e);
+              // Fall back to treating it as a regular string with separators
+              processedDressType = parseArrayField(item.dress_type);
+            }
+          } else {
+            // Normal processing for non-JSON dress_type
+            processedDressType = parseArrayField(item.dress_type);
+          }
+
+          // Process dress_attributes if not already set from dress_type JSON
+          if (Object.keys(processedDressAttrs).length === 0) {
+            if (item.dress_attributes) {
+              try {
+                if (typeof item.dress_attributes === 'string') {
+                  // Clean up the JSON string for common issues
+                  let jsonStr = item.dress_attributes
+                    .replace(/^\s*["']?\s*{/g, '{')
+                    .replace(/}\s*["']?\s*$/g, '}')
+                    .replace(/([{,])\s*['"]?([^"'{}:,]+)['"]?\s*:/g, '$1"$2":') // Fix keys
+                    .replace(/:\s*['"]([^"',{}]+)['"]\s*([,}])/g, ':"$1"$2') // Fix values
+                    .replace(/\\"/g, '"')
+                    .replace(/"{2,}/g, '"');
+                  
+                  try {
+                    processedDressAttrs = JSON.parse(jsonStr);
+                  } catch (parseError) {
+                    console.warn(`Failed to parse dress_attributes JSON for item ${name}:`, parseError);
+                    console.warn('Attempted to parse:', jsonStr);
+                    // Try to create dress attributes from individual columns if they exist
+                    processedDressAttrs = {
+                      fabric: item.fabric || '',
+                      length: item.length || '',
+                      primary_colour: item.primary_colour || '',
+                      primary_shades: parseArrayField(item.primary_shades),
+                      pattern: item.pattern || '',
+                      neck: item.neck || '',
+                      occasion: item.occasion || '',
+                      print: item.print || '',
+                      shape: item.shape || '',
+                      sleeve_length: item.sleeve_length || '',
+                      sleeve_styling: item.sleeve_styling || ''
+                    };
+                  }
+                } else if (typeof item.dress_attributes === 'object') {
+                  processedDressAttrs = item.dress_attributes;
+                }
+              } catch (error) {
+                console.error('Error processing dress attributes:', error);
+                processedDressAttrs = {}; // Use empty object if parsing fails
+              }
+            } else {
+              // Try to create dress attributes from individual columns if they exist
+              processedDressAttrs = {
+                fabric: item.fabric || '',
+                length: item.length || '',
+                primary_colour: item.primary_colour || '',
+                primary_shades: parseArrayField(item.primary_shades),
+                pattern: item.pattern || '',
+                neck: item.neck || '',
+                occasion: item.occasion || '',
+                print: item.print || '',
+                shape: item.shape || '',
+                sleeve_length: item.sleeve_length || '',
+                sleeve_styling: item.sleeve_styling || ''
+              };
+            }
+          }
+
+          // Clean up brand_id
+          let brandId = null;
+          if (item.brand_id) {
+            brandId = String(item.brand_id).trim();
+          }
+
+          const processedItem: CSVInventoryItem = {
+            name: name,
+            description: description,
+            price: price,
+            stock: stock,
+            image_url: item.image_url?.toString() || '',
+            image_url_2: item.image_url_2?.toString() || null,
+            image_url_3: item.image_url_3?.toString() || null,
+            brand_id: brandId,
+            sizes: parseArrayField(item.sizes),
+            body_shapes: parseArrayField(item.body_shapes),
+            color_tones: parseArrayField(item.color_tones),
+            dress_type: processedDressType,
+            dress_attributes: processedDressAttrs
+          };
+
+          processedItems.push(processedItem);
+        } catch (itemError) {
+          const errorMessage = itemError instanceof Error ? itemError.message : 'Unknown error during processing';
+          console.error(`Error processing item at index ${i}:`, itemError);
+          errors.push(`Row ${i+1}: ${errorMessage}`);
+        }
+      }
+
+      if (processedItems.length === 0) {
+        throw new Error('No valid items could be processed. Please check the file format and required fields.');
+      }
+
+      // Log processing results
+      console.log(`Processed ${processedItems.length} items successfully`);
+      if (errors.length > 0) {
+        console.warn(`Encountered ${errors.length} errors during processing:`, errors);
       }
 
       // Insert or update items in the database
-      for (const item of items) {
-        const { parsedDressAttributes, dress_attributes, body_shapes, color_tones, dress_type, ...inventoryItem } = item;
+      for (const item of processedItems) {
+        const { dress_attributes, body_shapes, color_tones, dress_type, ...inventoryItem } = item;
+        const processedDressType: string[] = Array.isArray(dress_type) ? dress_type : [];
+        const processedDressAttrs: Record<string, any> = typeof dress_attributes === 'object' ? dress_attributes || {} : {};
 
-        // Check if the item already exists
-        const { data: existingItem, error: fetchError } = await supabase
-          .from('inventory_items')
-          .select('id')
-          .eq('name', inventoryItem.name)
-          .single();
-
-        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116: No rows found
-          throw fetchError;
-        }
-
-        let itemId: string;
-
-        if (existingItem) {
-          // Update existing item
-          const { error: itemError } = await supabase
+        try {
+          // Check if the item already exists using ilike for case-insensitive matching
+          const { data: existingItems, error: fetchError } = await supabase
             .from('inventory_items')
-            .update(inventoryItem)
-            .eq('id', existingItem.id);
+            .select('id')
+            .ilike('name', inventoryItem.name || '')
+            .limit(1);
 
-          if (itemError) throw itemError;
-          itemId = existingItem.id;
-
-          // Update item attributes
-          const { error: attrError } = await supabase
-            .from('item_attributes')
-            .update({ body_shapes, color_tones, dress_type })
-            .eq('item_id', existingItem.id);
-
-          if (attrError) throw attrError;
-
-          // Update dress attributes
-          if (parsedDressAttributes) {
-            const dressAttrPayload: DressAttributes = {
-              product_id: itemId,
-              fabric: parsedDressAttributes.fabric,
-              length: parsedDressAttributes.length,
-              primary_colour: parsedDressAttributes.primary_colour,
-              primary_shades: parsedDressAttributes.primary_shades,
-              pattern: parsedDressAttributes.pattern,
-              neck: parsedDressAttributes.neck,
-              occasion: parsedDressAttributes.occasion,
-              print: parsedDressAttributes.print,
-              shape: parsedDressAttributes.shape,
-              sleeve_length: parsedDressAttributes.sleeve_length,
-              sleeve_styling: parsedDressAttributes.sleeve_styling
-            };
-            
-            const { error: dressAttrError } = await supabase
-              .from('dress_attributes')
-              .update(dressAttrPayload)
-              .eq('product_id', itemId);
-
-            if (dressAttrError) throw dressAttrError;
+          if (fetchError) {
+            console.error('Error checking for existing item:', fetchError);
+            throw new Error(`Failed to check for existing item: ${fetchError.message}`);
           }
-        } else {
-          // Insert new item
-          const { data: newItem, error: itemError } = await supabase
-            .from('inventory_items')
-            .insert([inventoryItem])
-            .select()
-            .single();
 
-          if (itemError) throw itemError;
-          if (!newItem) throw new Error('Failed to insert inventory item');
-          itemId = newItem.id;
+          let itemId: string;
+          const existingItem = existingItems?.[0];
 
-          // Insert item attributes
-          const { error: attrError } = await supabase
-            .from('item_attributes')
-            .insert([{ item_id: itemId, body_shapes, color_tones, dress_type }]);
+          if (existingItem) {
+            // Update existing item
+            const { error: itemError } = await supabase
+              .from('inventory_items')
+              .update({
+                ...inventoryItem,
+                brand_id: inventoryItem.brand_id || null, // Ensure brand_id is explicitly set
+                dress_attributes: processedDressAttrs // Store dress attributes in inventory_items
+              })
+              .eq('id', existingItem.id);
 
-          if (attrError) throw attrError;
+            if (itemError) throw itemError;
+            itemId = existingItem.id;
 
-          // Insert dress attributes
-          if (parsedDressAttributes) {
-            const dressAttrPayload: DressAttributes = {
-              product_id: itemId,
-              fabric: parsedDressAttributes.fabric,
-              length: parsedDressAttributes.length,
-              primary_colour: parsedDressAttributes.primary_colour,
-              primary_shades: parsedDressAttributes.primary_shades,
-              pattern: parsedDressAttributes.pattern,
-              neck: parsedDressAttributes.neck,
-              occasion: parsedDressAttributes.occasion,
-              print: parsedDressAttributes.print,
-              shape: parsedDressAttributes.shape,
-              sleeve_length: parsedDressAttributes.sleeve_length,
-              sleeve_styling: parsedDressAttributes.sleeve_styling
-            };
-            
-            const { error: dressAttrError } = await supabase
-              .from('dress_attributes')
-              .insert([dressAttrPayload]);
+            // Update item attributes
+            const { error: attrError } = await supabase
+              .from('item_attributes')
+              .update({
+                body_shapes: body_shapes,
+                color_tones: color_tones,
+                dress_type: processedDressType
+              })
+              .eq('item_id', existingItem.id);
 
-            if (dressAttrError) throw dressAttrError;
+            if (attrError) throw attrError;
+          } else {
+            // Insert new item
+            const { data: newItem, error: itemError } = await supabase
+              .from('inventory_items')
+              .insert([{
+                ...inventoryItem,
+                brand_id: inventoryItem.brand_id || null, // Ensure brand_id is explicitly set
+                dress_attributes: processedDressAttrs // Store dress attributes in inventory_items
+              }])
+              .select()
+              .single();
+
+            if (itemError) throw itemError;
+            if (!newItem) throw new Error('Failed to insert inventory item');
+            itemId = newItem.id;
+
+            // Insert item attributes
+            const { error: attrError } = await supabase
+              .from('item_attributes')
+              .insert([{
+                item_id: itemId,
+                body_shapes: body_shapes,
+                color_tones: color_tones,
+                dress_type: processedDressType
+              }]);
+
+            if (attrError) throw attrError;
           }
+        } catch (dbError) {
+          const errorMessage = dbError instanceof Error ? dbError.message : 'Unknown database error';
+          console.error('Database operation failed for item:', item.name, dbError);
+          errors.push(`Database error for ${item.name}: ${errorMessage}`);
         }
       }
 
-      setUploadSuccess(`Successfully imported ${items.length} items`);
+      // Show success with details about any skipped items
+      if (errors.length > 0) {
+        setUploadSuccess(`Successfully imported ${processedItems.length} items. ${errors.length} items were skipped due to errors.`);
+      } else {
+        setUploadSuccess(`Successfully imported all ${processedItems.length} items`);
+      }
+      
       fetchInventory(); // Refresh inventory list
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Failed to process file');
       console.error('Upload error:', err);
     } finally {
       setFileProcessing(false);
-      // Reset file input
-      e.target.value = '';
+      e.target.value = ''; // Reset file input
     }
   };
 
@@ -764,7 +882,7 @@ export function AdminPanel() {
     }
   };
 
-  if (authChecking) {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black" />
@@ -772,9 +890,9 @@ export function AdminPanel() {
     );
   }
 
-  // if (!isAdmin) {
-  //   return null;
-  // }
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -888,10 +1006,10 @@ export function AdminPanel() {
                   <label className="px-4 py-2 bg-gray-900 text-white rounded-lg cursor-pointer
                                 hover:bg-gray-800 transition-colors flex items-center gap-2">
                     <Upload className="w-4 h-4" />
-                    Upload CSV
+                    Upload File
                     <input
                       type="file"
-                      accept=".csv"
+                      accept=".csv,.json"
                       onChange={handleFileUpload}
                       className="hidden"
                     />
@@ -959,10 +1077,7 @@ export function AdminPanel() {
           ) : activeTab === 'orders' ? (
             <div className="space-y-4">
               {filteredOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className="border border-gray-200 rounded-lg p-4"
-                >
+                <div key={order.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="font-medium text-gray-900">
@@ -1089,8 +1204,6 @@ export function AdminPanel() {
                           type="number"
                           name="price"
                           defaultValue={editingItem?.price}
-                          step="0.01"
-                          min="0"
                           className="w-full px-3 py-2 border rounded-lg"
                           required
                         />
@@ -1101,7 +1214,6 @@ export function AdminPanel() {
                           type="number"
                           name="stock"
                           defaultValue={editingItem?.stock}
-                          min="0"
                           className="w-full px-3 py-2 border rounded-lg"
                           required
                         />
@@ -1141,22 +1253,27 @@ export function AdminPanel() {
                           defaultValue={editingItem?.brand_id || ''}
                           className="w-full px-3 py-2 border rounded-lg"
                           required
-                          onChange={(e) => console.log('Selected brand:', e.target.value)}
                         >
                           <option value="">Select Brand</option>
-                          {brands && brands.length > 0 ? (
-                            brands.map((brand) => (
-                              <option key={brand.id} value={brand.id}>
-                                {brand.Name} ({brand.id})
-                              </option>
-                            ))
-                          ) : (
-                            <option value="" disabled>No brands available</option>
-                          )}
+                          {brands.map((brand) => (
+                            <option key={brand.id} value={brand.id}>
+                              {brand.Name}
+                            </option>
+                          ))}
                         </select>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {editingItem?.brand_id ? `Current brand ID: ${editingItem.brand_id}` : 'No brand selected'}
-                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Sizes</label>
+                        <input
+                          type="text"
+                          name="sizes"
+                          defaultValue={Array.isArray(editingItem?.sizes) 
+                            ? editingItem.sizes.join(', ') 
+                            : editingItem?.sizes || ''}
+                          placeholder="S, M, L, XL"
+                          className="w-full px-3 py-2 border rounded-lg"
+                          required
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Body Shapes</label>
@@ -1185,7 +1302,18 @@ export function AdminPanel() {
                         <input
                           type="text"
                           name="dress_type"
-                          defaultValue={editingItem?.item_attributes?.[0]?.dress_type}
+                          defaultValue={(() => {
+                            try {
+                              const dressTypeData = editingItem?.item_attributes?.[0]?.dress_type;
+                              if (typeof dressTypeData === 'string') {
+                                const parsed = JSON.parse(dressTypeData);
+                                return parsed.types?.join(', ') || '';
+                              }
+                              return Array.isArray(dressTypeData) ? dressTypeData.join(', ') : '';
+                            } catch (e) {
+                              return '';
+                            }
+                          })()}
                           placeholder="casual, formal, etc."
                           className="w-full px-3 py-2 border rounded-lg"
                           required
@@ -1413,10 +1541,7 @@ export function AdminPanel() {
           ) : (
             <div className="space-y-4">
               {filteredReturns.map((returnItem) => (
-                <div
-                  key={returnItem.id}
-                  className="border border-gray-200 rounded-lg p-4"
-                >
+                <div key={returnItem.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="font-medium text-gray-900">
